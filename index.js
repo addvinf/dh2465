@@ -1,8 +1,11 @@
-require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
-const express = require('express');
-const { createSupabaseClientFromEnv } = require('./supabase');
-const helloWorldRouter = require('./routers/helloWorld');
-const supabaseExampleRouter = require('./routers/supabaseExample');
+import path from 'node:path';
+import dotenv from 'dotenv';
+import express from 'express';
+import { createSupabaseClientFromEnv } from './supabase.js';
+import helloWorldRouter from './routers/helloWorld.js';
+import supabaseExampleRouter from './routers/supabaseExample.js';
+
+dotenv.config({ path: path.resolve(path.dirname(new URL(import.meta.url).pathname), '.env') });
 
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;

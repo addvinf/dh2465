@@ -1,6 +1,6 @@
-const express = require('express');
+import { Router } from 'express';
 
-const router = express.Router();
+const router = Router();
 
 // GET /hello
 router.get('/hello', (req, res) => {
@@ -12,6 +12,6 @@ router.get('/', (req, res) => {
   res.type('text').send('Express server running. Try GET /hello');
 });
 
-module.exports = router;
+export default router;
 
 

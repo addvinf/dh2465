@@ -1,6 +1,6 @@
-const express = require('express');
+import { Router } from 'express';
 
-const router = express.Router();
+const router = Router();
 
 function getSupabase(req) {
   return req.app.locals.supabase || null;
@@ -42,6 +42,6 @@ router.post('/', async (req, res) => {
   res.status(201).json({ data });
 });
 
-module.exports = router;
+export default router;
 
 
