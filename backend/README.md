@@ -1,7 +1,21 @@
 ## dh2465 Node + Express + Supabase (ESM)
 
 ### Setup
-- Node 18+ recommended (project uses ESM).
+- Node 20+ recommended (project uses ESM). Supabase has deprecated Node 18 and below; upgrade to Node 20+.
+  See: https://github.com/orgs/supabase/discussions/37217
+
+To use Node 20 locally:
+
+```
+# with nvm
+nvm install 20 && nvm use 20
+
+# with asdf
+asdf install nodejs 20.0.0 && asdf local nodejs 20.0.0
+
+# with volta
+volta install node@20
+```
 - In this folder:
 
 ```bash
