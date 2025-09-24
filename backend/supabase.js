@@ -10,6 +10,12 @@ export async function createSupabaseClientFromEnv() {
   }
 
   const supabaseKey = supabaseServiceRoleKey || supabaseAnonKey;
+  const keyType = supabaseServiceRoleKey ? 'service_role' : (supabaseAnonKey ? 'anon' : 'none');
+  try {
+    console.log(`Supabase client: using ${keyType} key`);
+  } catch (e) {
+    // ignore logging issues
+  }
   const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });

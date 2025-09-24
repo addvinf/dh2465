@@ -4,6 +4,7 @@ import express from 'express';
 import { createSupabaseClientFromEnv } from './supabase.js';
 import helloWorldRouter from './routers/helloWorld.js';
 import supabaseExampleRouter from './routers/supabaseExample.js';
+import orgDataRouter from './routers/orgData.js';
 
 dotenv.config({ path: path.resolve(path.dirname(new URL(import.meta.url).pathname), '.env') });
 
@@ -25,6 +26,7 @@ createSupabaseClientFromEnv()
 app.use(express.json());
 app.use('/', helloWorldRouter);
 app.use('/supabase-example', supabaseExampleRouter);
+app.use('/api', orgDataRouter);
 
 // Simple config status endpoint
 app.get('/supabase/health', (req, res) => {
