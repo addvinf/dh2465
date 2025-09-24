@@ -99,14 +99,35 @@ $$;
 
 -- FUNCTION: create_org_personnel(text)
 CREATE OR REPLACE FUNCTION create_org_personnel(org_name TEXT, cols TEXT[] DEFAULT
-  ARRAY['Upplagd av','Personnummer','Förnamn','Efternamn','Clearingnr','Bankkonto','Adress','Postnr','Postort','E-post','Kostnadsställe','Ändringsdag','Månad','Timme','Heldag','Annan','Kommentar']
+  ARRAY['Upplagd av','Personnummer','Förnamn','Efternamn','Clearingnr','Bankkonto','Adress','Postnr','Postort','E-post','Kostnadsställe','Ändringsdag','Månad','Timme','Heldag','Annan','Kommentar',
+        'added_to_fortnox','fortnox_employee_id']
 )
 RETURNS VOID SECURITY DEFINER LANGUAGE PLPGSQL AS $$
 DECLARE
   org TEXT;
+  tbl TEXT;
+  col_types TEXT[];
+  idx_name TEXT;
 BEGIN
   org := normalize_org_name(org_name);
-  PERFORM create_if_not_exists_table_with_columns(org || '_personnel', cols, (SELECT array(SELECT 'TEXT' FROM unnest(cols))));
+  tbl := org || '_personnel';
+
+  -- Build types: BOOLEAN for added_to_fortnox, TEXT otherwise
+  SELECT ARRAY_AGG(CASE WHEN c = 'added_to_fortnox' THEN 'BOOLEAN' ELSE 'TEXT' END)
+    INTO col_types
+  FROM UNNEST(cols) AS c;
+
+  PERFORM create_if_not_exists_table_with_columns(tbl, cols, col_types);
+
+  -- Ensure default false on added_to_fortnox
+  EXECUTE FORMAT('ALTER TABLE %I ALTER COLUMN %I SET DEFAULT false', tbl, 'added_to_fortnox');
+  -- Backfill NULLs to false (idempotent)
+  EXECUTE FORMAT('UPDATE %I SET %I = false WHERE %I IS NULL', tbl, 'added_to_fortnox', 'added_to_fortnox');
+
+  -- Unique index on email (case-insensitive), if column exists
+  idx_name := tbl || '_email_uniq';
+  EXECUTE FORMAT('CREATE UNIQUE INDEX IF NOT EXISTS %I ON %I ((lower(%I))) WHERE %I IS NOT NULL',
+                 idx_name, tbl, 'E-post', 'E-post');
 END;
 $$;
 

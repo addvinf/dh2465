@@ -30,7 +30,8 @@ const EXPECTED_COLUMNS = {
     'Ledare','KS','Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec','Summa','Semers','TOTALT','Soc avg','TOT KLUBB'
   ],
   personnel: [
-    'Upplagd av','Personnummer','Förnamn','Efternamn','Clearingnr','Bankkonto','Adress','Postnr','Postort','E-post','Kostnadsställe','Ändringsdag','Månad','Timme','Heldag','Annan','Kommentar'
+    'Upplagd av','Personnummer','Förnamn','Efternamn','Clearingnr','Bankkonto','Adress','Postnr','Postort','E-post','Kostnadsställe','Ändringsdag','Månad','Timme','Heldag','Annan','Kommentar',
+    'added_to_fortnox','fortnox_employee_id'
   ],
 };
 
@@ -55,7 +56,7 @@ function filterToExpected(type, record) {
     if (Object.prototype.hasOwnProperty.call(record, c)) {
       out[c] = record[c];
     } else {
-      out[c] = null;
+      out[c] = c === 'added_to_fortnox' ? false : null;
     }
   }
   return out;
@@ -191,11 +192,24 @@ async function insertRow(req, res, type) {
     for (const c of cols) {
       if (Object.prototype.hasOwnProperty.call(payloadRaw, c)) {
         payload[c] = payloadRaw[c];
+      } else if (type === 'personnel' && c === 'added_to_fortnox') {
+        payload[c] = false;
       }
     }
 
     const { error } = await supabase.from(table).insert(payload, { returning: 'representation' });
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      if (type === 'personnel') {
+        const msg = String(error.message || '').toLowerCase();
+        if (msg.includes('duplicate') || msg.includes('unique')) {
+          return res.status(409).json({
+            error: 'Duplicate staff email',
+            warning: 'A personnel entry with this email already exists.',
+          });
+        }
+      }
+      return res.status(500).json({ error: error.message });
+    }
     res.status(201).json({ table, inserted: 1 });
   } catch (err) {
     res.status(500).json({ error: err?.message || String(err) });

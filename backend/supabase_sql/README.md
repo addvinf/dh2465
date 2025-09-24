@@ -142,7 +142,7 @@ This guide documents the backend endpoints that create and modify database table
 ## Expected Columns (defaults)
 - `compensations`: `Upplagd av`, `Avser Mån/år`, `Ledare`, `Kostnadsställe`, `Aktivitetstyp`, `Antal`, `Ersättning`, `Eventuell kommentar`, `Datum utbet`
 - `monthly_retainer`: `Ledare`, `KS`, `Jan`, `Feb`, `Mar`, `Apr`, `Maj`, `Jun`, `Jul`, `Aug`, `Sep`, `Okt`, `Nov`, `Dec`, `Summa`, `Semers`, `TOTALT`, `Soc avg`, `TOT KLUBB`
-- `personnel`: `Upplagd av`, `Personnummer`, `Förnamn`, `Efternamn`, `Clearingnr`, `Bankkonto`, `Adress`, `Postnr`, `Postort`, `E-post`, `Kostnadsställe`, `Ändringsdag`, `Månad`, `Timme`, `Heldag`, `Annan`, `Kommentar`
+- `personnel`: `Upplagd av`, `Personnummer`, `Förnamn`, `Efternamn`, `Clearingnr`, `Bankkonto`, `Adress`, `Postnr`, `Postort`, `E-post`, `Kostnadsställe`, `Ändringsdag`, `Månad`, `Timme`, `Heldag`, `Annan`, `Kommentar`, `added_to_fortnox` (BOOLEAN, default false), `fortnox_employee_id`
 
 ## Troubleshooting
 - Permission denied for schema public:
@@ -158,6 +158,10 @@ This guide documents the backend endpoints that create and modify database table
   - Ensure `:type` is one of `compensations|monthly_retainer|personnel`.
 - Empty/missing columns on insert:
   - Only expected columns are persisted. Missing keys are stored as `null` on bulk upload.
+  - For `personnel`, `added_to_fortnox` defaults to `false` when missing.
+  - Duplicate personnel email:
+    - Single-row insert returns `409` with a warning if a row with the same email already exists.
+    - Bulk upload will fail on duplicates due to the unique index on lower(`E-post`). If you prefer to skip duplicates during bulk load, ask to enable an upsert/ignore strategy.
 
 ---
 For questions or for a ready-to-import Postman collection, ask your dev assistant to generate it based on this guide.
