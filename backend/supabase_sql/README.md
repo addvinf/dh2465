@@ -163,5 +163,42 @@ This guide documents the backend endpoints that create and modify database table
     - Single-row insert returns `409` with a warning if a row with the same email already exists.
     - Bulk upload will fail on duplicates due to the unique index on lower(`E-post`). If you prefer to skip duplicates during bulk load, ask to enable an upsert/ignore strategy.
 
+## Row Level Security (RLS)
+- The SQL helper enables RLS on each created table automatically.
+- You must define policies that match your auth model, e.g. allow service role to do everything, and restrict anon/authenticated users.
+- Example policies (adjust to your schema):
+  ```sql
+  -- Allow service role full access
+  DO $$ BEGIN
+    -- Replace with your actual table name
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='test_forening_personnel' AND policyname='service_role_all'
+    ) THEN
+      CREATE POLICY service_role_all ON public.test_forening_personnel
+      FOR ALL TO service_role USING (true) WITH CHECK (true);
+    END IF;
+  END $$;
+
+  -- Read-only for authenticated users (example)
+  DO $$ BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='test_forening_personnel' AND policyname='auth_read'
+    ) THEN
+      CREATE POLICY auth_read ON public.test_forening_personnel
+      FOR SELECT TO authenticated USING (true);
+    END IF;
+  END $$;
+  ```
+- If you prefer org-scoped JWT claims (e.g. claim `org`), you can make policies like:
+  ```sql
+  CREATE POLICY org_isolation_read ON public.test_forening_personnel
+  FOR SELECT TO authenticated
+  USING (
+    current_setting('request.jwt.claims', true)::jsonb ? 'org'
+    AND (current_setting('request.jwt.claims', true)::jsonb ->> 'org') = 'test_forening'
+  );
+  ```
+  Replace hard-coded values with variables or create one policy per table.
+
 ---
 For questions or for a ready-to-import Postman collection, ask your dev assistant to generate it based on this guide.

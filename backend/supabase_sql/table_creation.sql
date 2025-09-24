@@ -69,6 +69,9 @@ BEGIN
   FOR i IN 1..COALESCE(array_length(col_names,1),0) LOOP
     EXECUTE FORMAT('ALTER TABLE %I ADD COLUMN IF NOT EXISTS %I %s', tbl_name, col_names[i], col_types[i]);
   END LOOP;
+
+  -- Ensure Row Level Security is enabled (idempotent)
+  EXECUTE FORMAT('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl_name);
 END;
 $$;
 
