@@ -12,7 +12,8 @@
     --foreground: 215 25% 27%;
 
     /* Financial Blue Palette */
-    --primary: 214 84% 56%;
+    /* --primary: 214 84% 56%; */
+    --primary: 218 27.6% 39%;
     --primary-foreground: 0 0% 100%;
     --primary-muted: 214 50% 95%;
 
@@ -30,6 +31,7 @@
     --card: 0 0% 100%;
     --card-foreground: 215 25% 27%;
     --card-border: 214 20% 91%;
+    /* --card-border: 205 13.3% 17.6%; */
 
     /* Interface Elements */
     --secondary: 214 13% 95%;

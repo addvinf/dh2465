@@ -164,13 +164,9 @@ export function ExcelUpload({ onFileUpload }: ExcelUploadProps) {
           {/* Expected format info */}
           <div className="bg-muted p-4 rounded-lg">
             <h4 className="font-medium mb-2">Förväntad format:</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-muted-foreground">
-              {expectedColumns.map((col) => (
-                <div key={col} className="bg-background px-2 py-1 rounded">
-                  {col}
-                </div>
-              ))}
-            </div>
+            {/* make a div that suggest which files that should be accepted:, ie just a list of 3 fil names*/}
+            <p> Personal Förening.xlsx (Endast mock)</p>
+
             <p className="text-xs text-muted-foreground mt-2">
               * Systemet kan hantera andra format också
             </p>

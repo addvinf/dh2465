@@ -128,7 +128,7 @@ export function ExcelViewer({
           </Button>
         </div>
 
-        <ScrollArea className="h-[60vh] w-full border rounded-lg">
+        <ScrollArea className="h-[60vh] w-full border rounded-lg overflow-auto">
           <div className="min-w-max">
             <Table>
               <TableHeader>
