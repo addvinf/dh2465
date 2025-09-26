@@ -1,5 +1,5 @@
 import { Settings, User, Bell } from "lucide-react";
-import { Button } from "../components/ui/button";
+import { Button } from "./ui/Button";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import myImage from "../assets/loggademo.png";
 import {
@@ -13,15 +13,23 @@ import { Link } from "react-router-dom";
 
 export function Header() {
   return (
-    <header className="border-border bg-card bg-gray-100 rounded-lg">
+    <header
+      className="sticky top-4 z-50 m-4 rounded-xl"
+      style={{
+        background: "rgba(30, 30, 30, 0.7)", // semi-transparent dark
+        backdropFilter: "blur(16px)", // frosted glass effect
+        WebkitBackdropFilter: "blur(16px)", // Safari support
+        // border: "1px solid rgba(255,255,255,0.08)", // subtle border
+      }}
+    >
       <div className="flex h-16 items-center justify-between px-6 rounded-lg">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <Link to="/">
               <img
-                src={myImage}
+                src={"/src/assets/strategus logga.webp"}
                 alt="Strategus logga"
-                className="h-10 w-10 rounded cursor-pointer"
+                className="h-12 w-18 rounded cursor-pointer"
               />
             </Link>
             <div>

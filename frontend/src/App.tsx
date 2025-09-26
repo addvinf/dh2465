@@ -11,22 +11,21 @@ import { PersonnelSection } from "./pages/PersonnelSection";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      {/* <Sonner /> */}
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<FrontPage />} />
-
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/personal" element={<PersonnelSection />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <div className="dark min-h-screen">
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<FrontPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/personal" element={<PersonnelSection />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </div>
 );
 
 export default App;

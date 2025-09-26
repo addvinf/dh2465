@@ -4,7 +4,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
-import { Button } from "../components/ui/button";
+import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/input";
 
 import {
@@ -161,7 +161,7 @@ export function PersonnelSection() {
               Ladda upp fil
             </Button>
             <Button
-              className="bg-gradient-primary text-primary-foreground shadow-financial"
+              className="bg-secondary text-secondary-foreground hover:bg-secondary-muted hover:text-secondary-foreground "
               onClick={() => setAddDialogOpen(true)}
             >
               <Plus className="mr-2 h-4 w-4" />
