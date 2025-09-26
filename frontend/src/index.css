@@ -53,8 +53,8 @@
     /* Gradients */
     --gradient-primary: linear-gradient(
       135deg,
-      hsl(214 84% 56%),
-      hsl(214 84% 66%)
+      hsl(218 27.6% 39%),
+      hsl(205 13.3% 17.6%)
     );
     --gradient-success: linear-gradient(
       135deg,
