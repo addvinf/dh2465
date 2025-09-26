@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Alert, AlertDescription } from "../components/ui/alert";
+import { fetchPersonnel } from "../services/personnelService";
 import * as XLSX from "xlsx";
 
 interface ExcelUploadProps {
@@ -92,11 +93,14 @@ export function ExcelUpload({ onFileUpload }: ExcelUploadProps) {
     }
   };
 
-  const handleBackendUpload = () => {
-    // Placeholder for backend file selection
+  const handleBackendUpload = async () => {
     setError("");
-    // This would typically open a file browser for backend files
-    alert("Backend filhantering kommer att implementeras");
+    try {
+      const { headers, rows } = await fetchPersonnel("test_förening");
+      onFileUpload(rows, headers, "Backend: test_förening");
+    } catch (err: any) {
+      setError(err.message || "Kunde inte hämta data från backend");
+    }
   };
 
   return (
