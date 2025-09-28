@@ -11,13 +11,24 @@ const FrontPage: React.FC = () => {
       <Header />
       <div className="min-h-screen flex flex-col justify-center items-center">
         <h1 className="text-9xl font-bold m-20">FRONT PAGE</h1>
+
+        <div className="relative w-full max-w-7xl mx-8 my-10">
+          <img
+            src="/src/assets/joshua-slate-HN9O6R5wUUc-unsplash.jpg"
+            alt="Demo background"
+            className="rounded-2xl w-full object-cover h-[30rem] brightness-90"
+          />
+          <div className="absolute top-1/2 left-1/2 frosted-box flex items-center justify-center">
+            <div className="p-8 flex flex-col items-center max-w-md">
+              <h2 className="text-4xl font-bold text-white mb-4">Demo Page</h2>
+              <p className="text-sm  text-white text-center">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
+                euismod
+              </p>
+            </div>
+          </div>
+        </div>
         <p className="text-xl mb-4">Slask pages:</p>
-        {/* <button
-      className="px-8 py-4 text-lg transition-colors"
-      onClick={() => navigate("/admin")}
-    >
-      Admin Page
-    </button> */}
         <Button
           className="px-10 py-4 text-lg"
           onClick={() => navigate("/admin")}

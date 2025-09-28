@@ -163,4 +163,8 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
+  .frosted-box {
+    @apply frosted w-full max-w-4xl mx-auto rounded-2xl px-6 py-6 shadow-lg;
+    transform: translate(-50%, -50%);
+  }
 }
