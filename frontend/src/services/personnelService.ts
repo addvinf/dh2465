@@ -16,3 +16,13 @@ export async function fetchPersonnel(org: string): Promise<{ headers: string[]; 
   );
   return { headers, rows };
 }
+
+export async function addPersonnel(org: string, person: Record<string, any>) {
+  const res = await fetch(`http://localhost:3000/api/org/${encodeURIComponent(org)}/personnel`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(person),
+  });
+  if (!res.ok) throw new Error("Kunde inte lägga till person");
+  return await res.json();
+}

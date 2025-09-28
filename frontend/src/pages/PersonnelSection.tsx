@@ -6,7 +6,7 @@ import {
 } from "../components/ui/card";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/input";
-
+import { fetchPersonnel, addPersonnel } from "../services/personnelService";
 import {
   Table,
   TableBody,
@@ -22,8 +22,7 @@ import {
   Upload,
   Edit3,
   MoreHorizontal,
-  UserCheck,
-  UserX,
+  RefreshCw,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -41,6 +40,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
+import { toast } from "../hooks/use-toast";
 
 export function PersonnelSection() {
   const [personnel, setPersonnel] = useState<any[][]>([]);
@@ -72,10 +72,28 @@ export function PersonnelSection() {
       });
   }, []);
 
-  const handleAddPerson = () => {
-    setPersonnel((prev) => [...prev, newPerson]);
-    setAddDialogOpen(false);
-    setNewPerson(Array(headers.length).fill("")); // Reset form
+  const handleAddPerson = async () => {
+    try {
+      // Build person object from newPerson array and headers
+      const personObj: { [key: string]: string } = {};
+      headers.forEach((header, idx) => {
+        personObj[header] = newPerson[idx] ?? "";
+      });
+
+      await addPersonnel("test_förening", personObj);
+
+      // Optionally refresh table after adding
+      await handleRefresh();
+
+      setAddDialogOpen(false);
+      setNewPerson(Array(headers.length).fill(""));
+      toast({ description: "Personen har lagts till!", variant: "default" });
+    } catch (err) {
+      toast({
+        description: "Kunde inte lägga till person.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Handle file upload and parse
@@ -119,6 +137,17 @@ export function PersonnelSection() {
 
     // Export to file
     XLSX.writeFile(wb, fileName || "Personal.xlsx");
+  };
+
+  const handleRefresh = async () => {
+    try {
+      const { headers, rows } = await fetchPersonnel("test_förening");
+      setHeaders(headers);
+      setPersonnel(rows);
+      setFileName("Backend: test_förening");
+    } catch (err) {
+      // Optionally handle error, e.g. toast or alert
+    }
   };
 
   const filteredPersonnel = personnel.filter((row) => {
@@ -309,6 +338,12 @@ export function PersonnelSection() {
                 Personalregister
               </CardTitle>
               <div className="flex items-center space-x-2">
+                {/* Refresh button */}
+                <RefreshCw
+                  className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground transition"
+                  onClick={handleRefresh}
+                />
+                {/* search */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -349,32 +384,49 @@ export function PersonnelSection() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPersonnel.map((row, idx) => (
-                  <TableRow key={idx} className="hover:bg-accent/50">
-                    {row.map((cell: any, cidx: number) => (
-                      <TableCell key={cidx}>{cell}</TableCell>
-                    ))}
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
+                {filteredPersonnel.map((row, idx) => {
+                  // Pad row to headers.length
+                  const paddedRow = Array(headers.length)
+                    .fill("")
+                    .map((_, i) => row[i] ?? "");
+                  return (
+                    <TableRow key={idx} className="hover:bg-accent/50">
+                      {paddedRow.map((cell: any, cidx: number) => (
+                        <TableCell key={cidx}>{cell}</TableCell>
+                      ))}
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="bg-card border-border"
                           >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="bg-card border-border"
-                        >
-                          <DropdownMenuItem>Visa lönehistorik</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                            {/* On click, make a toast popup that warn the user that this feature is not implemented */}
+                            <DropdownMenuItem
+                              onClick={() =>
+                                toast({
+                                  description:
+                                    "Denna funktion är inte implementerad än.",
+                                  variant: "destructive",
+                                })
+                              }
+                            >
+                              Visa lönehistorik
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>

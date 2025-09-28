@@ -21,26 +21,6 @@ export function ExcelUpload({ onFileUpload }: ExcelUploadProps) {
   const [error, setError] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const expectedColumns = [
-    "Upplagd av",
-    "Personnummer",
-    "Förnamn",
-    "Efternamn",
-    "Clearingnr",
-    "Bankkonto",
-    "Adress",
-    "Postnr",
-    "Postort",
-    "E-post",
-    "Kostnadsställe",
-    "Ändringsdag",
-    "Månad",
-    "Timme",
-    "Heldag",
-    "Annan",
-    "Kommentar",
-  ];
-
   const handleFile = (file: File) => {
     setError("");
 
@@ -64,7 +44,16 @@ export function ExcelUpload({ onFileUpload }: ExcelUploadProps) {
         }
 
         const headers = jsonData[0] as string[];
-        const rows = jsonData.slice(1) as any[][];
+        let rows = jsonData.slice(1) as any[][];
+
+        // Pad each row to headers.length
+        rows = rows.map((row) => {
+          const padded = Array(headers.length).fill("");
+          row.forEach((cell, i) => {
+            padded[i] = cell;
+          });
+          return padded;
+        });
 
         onFileUpload(rows, headers, file.name);
       } catch (err) {
