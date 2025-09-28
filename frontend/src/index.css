@@ -156,3 +156,11 @@
     box-shadow: var(--shadow-financial);
   }
 }
+
+@layer utilities {
+  .frosted {
+    background: rgba(30, 30, 30, 0.7); /* TODO: HARDCODED */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+}
