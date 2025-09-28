@@ -145,7 +145,7 @@
   }
 
   .financial-card {
-    @apply bg-card border border-card-border rounded-lg shadow-[var(--shadow-md)] p-6;
+    @apply bg-card border-transparent rounded-lg shadow-[var(--shadow-md)] p-6;
   }
 
   .financial-gradient {

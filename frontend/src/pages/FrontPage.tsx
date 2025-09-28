@@ -10,8 +10,8 @@ const FrontPage: React.FC = () => {
     <>
       <Header />
       <div className="min-h-screen flex flex-col justify-center items-center">
-        <h1 className="text-9xl font-bold m-10">FRONT PAGE</h1>
-        <p className="text-xl mb-8">Visit pages:</p>
+        <h1 className="text-9xl font-bold m-20">FRONT PAGE</h1>
+        <p className="text-xl mb-4">Slask pages:</p>
         {/* <button
       className="px-8 py-4 text-lg transition-colors"
       onClick={() => navigate("/admin")}
@@ -23,12 +23,6 @@ const FrontPage: React.FC = () => {
           onClick={() => navigate("/admin")}
         >
           Admin Page
-        </Button>
-        <Button
-          className="px-10 py-4 text-lg mt-4"
-          onClick={() => navigate("/personal")}
-        >
-          Personal
         </Button>
         <Button
           className="px-10 py-4 text-lg mt-4"

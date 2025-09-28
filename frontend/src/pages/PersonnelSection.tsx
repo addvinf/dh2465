@@ -57,19 +57,18 @@ export function PersonnelSection() {
   const [newPerson, setNewPerson] = useState<string[]>([]);
 
   useEffect(() => {
-    // Initial fetch for default Excel file
-    fetch("/src/assets/Personal Förening Mock (1).xlsx")
-      .then((res) => res.arrayBuffer())
-      .then((data) => {
-        const workbook = XLSX.read(new Uint8Array(data), { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        if (jsonData.length > 1) {
-          setHeaders(jsonData[0] as string[]);
-          setPersonnel(jsonData.slice(1) as any[][]);
-        }
-      });
+    // Initial fetch from backend
+    const fetchInitial = async () => {
+      try {
+        const { headers, rows } = await fetchPersonnel("test_förening");
+        setHeaders(headers);
+        setPersonnel(rows);
+        setFileName("Backend: test_förening");
+      } catch (err) {
+        // Optionally handle error, e.g. toast or alert
+      }
+    };
+    fetchInitial();
   }, []);
 
   const handleAddPerson = async () => {
@@ -266,69 +265,6 @@ export function PersonnelSection() {
             onSave={handleViewerSave}
           />
         )}
-
-        {/* ExcelViewer Dialog for editing current personnel data */}
-        {/* {viewerOpen && (
-          <ExcelViewer
-            data={personnel}
-            headers={headers}
-            fileName={fileName || "Personal.xlsx"}
-            isOpen={viewerOpen}
-            onClose={() => setViewerOpen(false)}
-            onSave={handleViewerSave}
-          />
-        )} */}
-
-        {/* Summary Cards */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="financial-card">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <UserCheck className="h-5 w-5 text-success" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Aktiva</p>
-                  <p className="text-xl font-semibold text-foreground">124</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="financial-card">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <UserX className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Inaktiva</p>
-                  <p className="text-xl font-semibold text-foreground">23</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="financial-card">
-            <CardContent className="p-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Idrottsutövare</p>
-                <p className="text-xl font-semibold text-foreground">89</p>
-                <p className="text-xs text-muted-foreground">
-                  Tränare, domare, lagledare
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="financial-card">
-            <CardContent className="p-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Övrig personal</p>
-                <p className="text-xl font-semibold text-foreground">35</p>
-                <p className="text-xs text-muted-foreground">
-                  Admin, café, sociala medier
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div> */}
 
         {/* Personnel Table */}
         <Card className="financial-card">

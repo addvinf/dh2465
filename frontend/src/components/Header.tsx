@@ -90,7 +90,7 @@ export function Header() {
                     <ChevronRight className="h-4 w-4 ml-2 text-muted-foreground" />
                   </Link>
                   <Link
-                    to="/manad-data"
+                    to="/monthly"
                     className="flex items-center justify-between px-4 py-2 text-foreground hover:bg-accent rounded transition-colors"
                     onClick={() => setNavOpen(false)}
                   >

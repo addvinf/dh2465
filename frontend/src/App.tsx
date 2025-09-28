@@ -7,6 +7,7 @@ import FrontPage from "./pages/FrontPage";
 import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 import { PersonnelSection } from "./pages/PersonnelSection";
+import { KompensationPage } from "./pages/CompensationPage";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,8 @@ const App = () => (
             <Route path="/" element={<FrontPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/personal" element={<PersonnelSection />} />
+            <Route path="/kompensation" element={<KompensationPage />} />
+            <Route path="/monthly" element={<KompensationPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
