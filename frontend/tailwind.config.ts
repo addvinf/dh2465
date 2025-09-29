@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
@@ -28,7 +29,6 @@ export default {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
           muted: "hsl(var(--secondary-muted))",
-
         },
         success: {
           DEFAULT: "hsl(var(--success))",
@@ -98,6 +98,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
-  },
-  plugins: [require("tailwindcss-animate")],
-} satisfies Config;
+    plugins: [tailwindcssAnimate],
+    content: []
+  } satisfies Config
+}

@@ -1,97 +1,86 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
 import { Button } from "../components/ui/Button";
-import { Input } from "../components/ui/input";
-import { fetchPersonnel, addPersonnel } from "../services/personnelService";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
-import {
-  Plus,
-  Search,
-  Download,
-  Upload,
-  Edit3,
-  MoreHorizontal,
-  RefreshCw,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
+  fetchPersonnel,
+  addPersonnel,
+  updatePersonnel,
+} from "../services/personnelService";
+import { Plus, Upload, RefreshCw } from "lucide-react";
 import { Header } from "../components/Header";
 import { useRef, useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { ExcelViewer } from "../components/ExcelViewer";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../components/ui/dialog";
 import { toast } from "../hooks/use-toast";
+import { PersonnelTable } from "../components/PersonnelTable";
+import { PersonnelForm } from "../components/PersonnelForm";
+import type { PersonnelRecord } from "../types/personnel";
 
 export function PersonnelSection() {
-  const [personnel, setPersonnel] = useState<any[][]>([]);
-  const [headers, setHeaders] = useState<string[]>([]);
-  const [fileName, setFileName] = useState<string>("");
+  const [personnel, setPersonnel] = useState<PersonnelRecord[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<
+    PersonnelRecord | undefined
+  >();
+  const [formLoading, setFormLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [viewerData, setViewerData] = useState<any[][]>([]);
   const [viewerHeaders, setViewerHeaders] = useState<string[]>([]);
   const [viewerFileName, setViewerFileName] = useState<string>("");
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [newPerson, setNewPerson] = useState<string[]>([]);
 
-  useEffect(() => {
-    // Initial fetch from backend
-    const fetchInitial = async () => {
-      try {
-        const { headers, rows } = await fetchPersonnel("test_förening");
-        setHeaders(headers);
-        setPersonnel(rows);
-        setFileName("Backend: test_förening");
-      } catch (err) {
-        // Optionally handle error, e.g. toast or alert
-      }
-    };
-    fetchInitial();
-  }, []);
-
-  const handleAddPerson = async () => {
+  const loadPersonnel = async () => {
+    setLoading(true);
     try {
-      // Build person object from newPerson array and headers
-      const personObj: { [key: string]: string } = {};
-      headers.forEach((header, idx) => {
-        personObj[header] = newPerson[idx] ?? "";
-      });
-
-      await addPersonnel("test_förening", personObj);
-
-      // Optionally refresh table after adding
-      await handleRefresh();
-
-      setAddDialogOpen(false);
-      setNewPerson(Array(headers.length).fill(""));
-      toast({ description: "Personen har lagts till!", variant: "default" });
+      const result = await fetchPersonnel("test_förening");
+      setPersonnel(result.data);
     } catch (err) {
       toast({
-        description: "Kunde inte lägga till person.",
+        description: "Kunde inte ladda personaldata",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPersonnel();
+  }, []);
+
+  const handleAddPerson = () => {
+    setEditingRecord(undefined);
+    setFormOpen(true);
+  };
+
+  const handleEditPerson = (record: PersonnelRecord) => {
+    setEditingRecord(record);
+    setFormOpen(true);
+  };
+
+  const handleFormSubmit = async (data: Partial<PersonnelRecord>) => {
+    setFormLoading(true);
+    try {
+      if (editingRecord?.id) {
+        await updatePersonnel("test_förening", editingRecord.id, data);
+        toast({ description: "Personen har uppdaterats!", variant: "default" });
+      } else {
+        await addPersonnel("test_förening", data);
+        toast({ description: "Personen har lagts till!", variant: "default" });
+      }
+
+      setFormOpen(false);
+      await loadPersonnel(); // Reload data
+    } catch (err) {
+      toast({
+        description: editingRecord
+          ? "Kunde inte uppdatera person"
+          : "Kunde inte lägga till person",
+        variant: "destructive",
+      });
+    } finally {
+      setFormLoading(false);
     }
   };
 
@@ -117,49 +106,15 @@ export function PersonnelSection() {
     reader.readAsArrayBuffer(file);
   };
 
-  // Save from ExcelViewer
+  // Save from ExcelViewer - would need additional processing to convert to PersonnelRecord[]
   const handleViewerSave = (data: any[][]) => {
-    setPersonnel(data);
-    setHeaders(viewerHeaders);
+    // This would need proper conversion from array format to PersonnelRecord format
+    toast({
+      description: "Excel import inte helt implementerad än",
+      variant: "destructive",
+    });
     setViewerOpen(false);
   };
-
-  const handleExport = () => {
-    if (!headers.length || !personnel.length) return;
-
-    // Create worksheet with headers + data
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...personnel]);
-
-    // Create workbook and append worksheet
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Personal");
-
-    // Export to file
-    XLSX.writeFile(wb, fileName || "Personal.xlsx");
-  };
-
-  const handleRefresh = async () => {
-    try {
-      const { headers, rows } = await fetchPersonnel("test_förening");
-      setHeaders(headers);
-      setPersonnel(rows);
-      setFileName("Backend: test_förening");
-    } catch (err) {
-      // Optionally handle error, e.g. toast or alert
-    }
-  };
-
-  const filteredPersonnel = personnel.filter((row) => {
-    // Adjust indexes based on your Excel columns
-    const name = String(row[2] || "").toLowerCase(); // Förnamn
-    const position = String(row[6] || "").toLowerCase(); // Befattning
-    const email = String(row[9] || "").toLowerCase(); // E-post
-    return (
-      name.includes(searchTerm.toLowerCase()) ||
-      position.includes(searchTerm.toLowerCase()) ||
-      email.includes(searchTerm.toLowerCase())
-    );
-  });
 
   return (
     <>
@@ -172,7 +127,7 @@ export function PersonnelSection() {
               Hantera föreningens personal och ersättningar
             </p>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex items-center space-x-2">
             <input
               type="file"
               accept=".xlsx,.xls"
@@ -180,6 +135,14 @@ export function PersonnelSection() {
               style={{ display: "none" }}
               onChange={handleFileInput}
             />
+
+            <RefreshCw
+              className={`h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground transition ${
+                loading ? "animate-spin" : ""
+              }`}
+              onClick={loadPersonnel}
+            />
+
             <Button
               variant="outline"
               className="border-border"
@@ -189,8 +152,8 @@ export function PersonnelSection() {
               Ladda upp fil
             </Button>
             <Button
-              className="bg-secondary text-secondary-foreground hover:bg-secondary-muted hover:text-secondary-foreground "
-              onClick={() => setAddDialogOpen(true)}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              onClick={handleAddPerson}
             >
               <Plus className="mr-2 h-4 w-4" />
               Lägg till person
@@ -198,61 +161,23 @@ export function PersonnelSection() {
           </div>
         </div>
 
-        {/* Add Person Dialog */}
-        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          <DialogContent className="max-h-[90vh] flex flex-col">
-            <DialogHeader>
-              <DialogTitle>Lägg till person</DialogTitle>
-            </DialogHeader>
+        {/* Personnel Table */}
+        <PersonnelTable
+          data={personnel}
+          loading={loading}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          onEdit={handleEditPerson}
+        />
 
-            {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto pr-2">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleAddPerson();
-                }}
-                className="space-y-3"
-              >
-                {headers.map((header, idx) => (
-                  <div key={header} className="flex flex-col">
-                    <label className="text-sm text-muted-foreground mb-1">
-                      {header}
-                    </label>
-                    <Input
-                      value={newPerson[idx] || ""}
-                      onChange={(e) => {
-                        const updated = [...newPerson];
-                        updated[idx] = e.target.value;
-                        setNewPerson(updated);
-                      }}
-                    />
-                  </div>
-                ))}
-              </form>
-            </div>
-
-            {/* Sticky footer */}
-            <div className="flex justify-end gap-2 pt-3 border-t mt-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setAddDialogOpen(false)}
-              >
-                Avbryt
-              </Button>
-              <Button
-                type="submit"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleAddPerson();
-                }}
-              >
-                Lägg till
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Personnel Form Dialog */}
+        <PersonnelForm
+          isOpen={formOpen}
+          onClose={() => setFormOpen(false)}
+          onSubmit={handleFormSubmit}
+          initialData={editingRecord}
+          loading={formLoading}
+        />
 
         {/* ExcelViewer Dialog */}
         {viewerOpen && (
@@ -265,108 +190,6 @@ export function PersonnelSection() {
             onSave={handleViewerSave}
           />
         )}
-
-        {/* Personnel Table */}
-        <Card className="financial-card">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg text-foreground">
-                Personalregister
-              </CardTitle>
-              <div className="flex items-center space-x-2">
-                {/* Refresh button */}
-                <RefreshCw
-                  className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground transition"
-                  onClick={handleRefresh}
-                />
-                {/* search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Sök personal..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 w-64"
-                  />
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setViewerData(personnel);
-                    setViewerHeaders(headers);
-                    setViewerFileName(fileName || "Personal.xlsx");
-                    setViewerOpen(true);
-                  }}
-                >
-                  <Edit3 className="mr-2 h-4 w-4" />
-                  Redigera
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleExport}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Exportera
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {headers.map((header, idx) => (
-                    <TableHead key={idx}>{header}</TableHead>
-                  ))}
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPersonnel.map((row, idx) => {
-                  // Pad row to headers.length
-                  const paddedRow = Array(headers.length)
-                    .fill("")
-                    .map((_, i) => row[i] ?? "");
-                  return (
-                    <TableRow key={idx} className="hover:bg-accent/50">
-                      {paddedRow.map((cell: any, cidx: number) => (
-                        <TableCell key={cidx}>{cell}</TableCell>
-                      ))}
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="bg-card border-border"
-                          >
-                            {/* On click, make a toast popup that warn the user that this feature is not implemented */}
-                            <DropdownMenuItem
-                              onClick={() =>
-                                toast({
-                                  description:
-                                    "Denna funktion är inte implementerad än.",
-                                  variant: "destructive",
-                                })
-                              }
-                            >
-                              Visa lönehistorik
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
       </div>
     </>
   );
