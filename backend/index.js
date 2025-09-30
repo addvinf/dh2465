@@ -1,3 +1,4 @@
+
 import path from "node:path";
 import dotenv from "dotenv";
 import express from "express";
@@ -5,8 +6,11 @@ import { createSupabaseClientFromEnv } from "./supabase.js";
 import helloWorldRouter from "./routers/helloWorld.js";
 import supabaseExampleRouter from "./routers/supabaseExample.js";
 import orgDataRouter from "./routers/orgData.js";
+import fortnoxEmployeesRouter from './routers/fortnoxEmployees.js';
+import fortnoxAuthRouter, { initFortnoxAuth } from './routers/fortnoxAuth.js';
 import cors from "cors";
 
+dotenv.config();
 dotenv.config({
   path: path.resolve(path.dirname(new URL(import.meta.url).pathname), ".env"),
 });
@@ -40,9 +44,17 @@ app.use(
 );
 
 app.use(express.json());
+// Initialize Fortnox tokens from disk if available
+initFortnoxAuth(app).catch(() => {});
+
+
+
 app.use("/", helloWorldRouter);
 app.use("/supabase-example", supabaseExampleRouter);
 app.use("/api", orgDataRouter);
+app.use('/fortnox-employees', fortnoxEmployeesRouter);
+app.use('/fortnox-auth', fortnoxAuthRouter);
+
 
 // Simple config status endpoint
 app.get("/supabase/health", (req, res) => {
