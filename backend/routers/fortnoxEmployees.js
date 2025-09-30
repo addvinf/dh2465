@@ -18,9 +18,9 @@ function mapSupabaseRowToFortnoxEmployee(row) {
   const postCode = (row['Postnr'] || '').trim() || undefined;
   const city = (row['Postort'] || '').trim() || undefined;
   const costCenter = (row['Kostnadsställe'] || '').trim() || undefined;
+  const employmentDate = (row['Ändringsdag'] || '').trim() || undefined;
 
   // Env-driven defaults for fields often required by Fortnox Salary
-  const employmentDate = process.env.FORTNOX_DEFAULT_EMPLOYMENT_DATE || undefined; // YYYY-MM-DD
   const employmentForm = process.env.FORTNOX_DEFAULT_EMPLOYMENT_FORM || undefined; // TV/PRO/TID/SVT/VIK/PRJ/PRA/FER/SES/NEJ
   const salaryForm = process.env.FORTNOX_DEFAULT_SALARY_FORM || 'TIM'; // MAN/TIM
   const personelType = process.env.FORTNOX_DEFAULT_PERSONEL_TYPE || undefined; // TJM/ARB
@@ -55,8 +55,8 @@ function mapSupabaseRowToFortnoxEmployee(row) {
     Project: project,
     Country: country,
     EmployeeId: employeeId,
-    PersonelType: "ARB",
-    EmploymentDate: "2025-01-01",
+    PersonelType: "ARB", //TODO add by månadslön or timlön
+    EmploymentDate: employmentDate
   };
 
   Object.keys(employee).forEach((k) => {
