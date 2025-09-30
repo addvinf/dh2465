@@ -13,6 +13,7 @@ export function PersonnelTable({
   data,
   onEdit,
   onToggleStatus,
+  onDelete,
   loading = false,
   searchTerm = "",
   onSearchChange,
@@ -106,6 +107,7 @@ export function PersonnelTable({
             columns={currentColumns}
             onEdit={onEdit}
             onToggleStatus={onToggleStatus}
+            onDelete={onDelete}
           />
         )}
       </CardContent>

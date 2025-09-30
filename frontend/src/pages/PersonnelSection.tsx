@@ -4,6 +4,7 @@ import {
   addPersonnel,
   updatePersonnel,
   togglePersonnelStatus,
+  deletePersonnel,
 } from "../services/personnelService";
 import { Plus, Upload, RefreshCw } from "lucide-react";
 import { Header } from "../components/Header";
@@ -129,6 +130,33 @@ export function PersonnelSection() {
     }
   };
 
+  const handleDeletePerson = async (record: PersonnelRecord) => {
+    // Show confirmation dialog
+    if (
+      !confirm(
+        `Är du säker på att du vill ta bort ${record["Förnamn"]} ${record["Efternamn"]}? Detta kan inte ångras.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await deletePersonnel("test_förening", record.id!);
+
+      toast({
+        description: `${record["Förnamn"]} ${record["Efternamn"]} har tagits bort`,
+        variant: "default",
+      });
+
+      await loadPersonnel(); // Reload data
+    } catch (err) {
+      toast({
+        description: "Kunde inte ta bort person",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Save from ExcelViewer - would need additional processing to convert to PersonnelRecord[]
   const handleViewerSave = (_data: any[][]) => {
     // This would need proper conversion from array format to PersonnelRecord format
@@ -192,6 +220,7 @@ export function PersonnelSection() {
           onSearchChange={setSearchTerm}
           onEdit={handleEditPerson}
           onToggleStatus={handleToggleStatus}
+          onDelete={handleDeletePerson}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
         />

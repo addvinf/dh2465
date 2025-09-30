@@ -42,24 +42,24 @@ export type ViewMode = 'personal' | 'financial';
 
 // Define which columns to display in personal view
 export const PERSONAL_VIEW_COLUMNS: PersonnelColumn[] = [
-  { key: "Aktiv", label: "Status", visible: true, type: 'badge' },
-  { key: "Förnamn", label: "Förnamn", visible: true, sortable: true, searchable: true },
-  { key: "Efternamn", label: "Efternamn", visible: true, sortable: true, searchable: true },
-  { key: "Befattning", label: "Befattning", visible: true, type: 'badge', searchable: true },
-  { key: "E-post", label: "E-post", visible: true, sortable: true, searchable: true, type: 'email' },
-  { key: "Adress", label: "Adress", visible: true },
-  { key: "Postnr", label: "Postnr", visible: true },
-  { key: "Postort", label: "Postort", visible: true },
-  { key: "Personnummer", label: "Personnummer", visible: true, sortable: true },
+    { key: "Förnamn", label: "Förnamn", visible: true, sortable: true, searchable: true },
+    { key: "Efternamn", label: "Efternamn", visible: true, sortable: true, searchable: true },
+    { key: "Personnummer", label: "Personnummer", visible: true, sortable: true },
+    { key: "E-post", label: "E-post", visible: true, sortable: true, searchable: true, type: 'email' },
+    { key: "Befattning", label: "Befattning", visible: true, type: 'badge', searchable: true },
+    { key: "Adress", label: "Adress", visible: true },
+    { key: "Postnr", label: "Postnr", visible: true },
+    { key: "Postort", label: "Postort", visible: true },
+    { key: "Aktiv", label: "Status", visible: true, type: 'badge' },
   { key: "Kommentar", label: "Kommentar", visible: true },
 ];
 
 // Define which columns to display in financial view  
 export const FINANCIAL_VIEW_COLUMNS: PersonnelColumn[] = [
-  { key: "Aktiv", label: "Status", visible: true, type: 'badge' },
-  { key: "Förnamn", label: "Förnamn", visible: true, sortable: true, searchable: true },
-  { key: "Efternamn", label: "Efternamn", visible: true, sortable: true, searchable: true },
-  { key: "Befattning", label: "Befattning", visible: true, type: 'badge', searchable: true },
+    { key: "Förnamn", label: "Förnamn", visible: true, sortable: true, searchable: true },
+    { key: "Efternamn", label: "Efternamn", visible: true, sortable: true, searchable: true },
+    { key: "Befattning", label: "Befattning", visible: true, type: 'badge', searchable: true },
+    { key: "Aktiv", label: "Status", visible: false, type: 'badge' },
   { key: "Clearingnr", label: "Clearingnr", visible: true },
   { key: "Bankkonto", label: "Bankkonto", visible: true },
   { key: "Kostnadsställe", label: "Kostnadsställe", visible: true, sortable: true, searchable: true },

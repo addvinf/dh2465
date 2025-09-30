@@ -17,6 +17,7 @@ interface PersonnelTableBodyProps {
   columns: PersonnelColumn[];
   onEdit?: (record: PersonnelRecord) => void;
   onToggleStatus?: (record: PersonnelRecord) => void;
+  onDelete?: (record: PersonnelRecord) => void;
 }
 
 export function PersonnelTableBody({
@@ -24,6 +25,7 @@ export function PersonnelTableBody({
   columns,
   onEdit,
   onToggleStatus,
+  onDelete,
 }: PersonnelTableBodyProps) {
   const visibleColumns = columns.filter((col) => col.visible);
 
@@ -121,6 +123,7 @@ export function PersonnelTableBody({
                   record={record}
                   onEdit={onEdit}
                   onToggleStatus={onToggleStatus}
+                  onDelete={onDelete}
                 />
               </TableCell>
             </TableRow>
