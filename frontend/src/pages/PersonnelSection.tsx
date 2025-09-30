@@ -7,6 +7,7 @@ import {
 import { Plus, Upload, RefreshCw } from "lucide-react";
 import { Header } from "../components/Header";
 import FortnoxPushButton from "../components/FortnoxPushButton";
+import FortnoxBatchErrors from "../components/FortnoxBatchErrors";
 import { checkFortnoxAuthStatus, initiateFortnoxLogin } from "../services/fortnoxService";
 import { useRef, useState, useEffect } from "react";
 import * as XLSX from "xlsx";
@@ -204,28 +205,7 @@ export function PersonnelSection() {
           onEdit={handleEditPerson}
         />
 
-        {/* Batch error panel */}
-        {batchErrors.length > 0 && (
-          <div className="mt-4 p-4 border border-destructive/40 rounded-md bg-destructive/5">
-            <h3 className="text-lg font-semibold mb-2">Fel vid export</h3>
-            <div className="space-y-2">
-              {batchErrors.map((err, idx) => (
-                <div key={idx} className="p-3 rounded bg-background border border-border">
-                  <div className="text-sm text-muted-foreground">Rad-ID: {err.id}</div>
-          
-                  {err.details?.ErrorInformation?.message && (
-                    <div className="text-sm mt-1 break-words">
-                      {err.details.ErrorInformation.message}
-                    </div>
-                  )}
-                  {err.details && !err.details.ErrorInformation && (
-                    <pre className="mt-2 text-xs whitespace-pre-wrap break-words">{JSON.stringify(err.details, null, 2)}</pre>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <FortnoxBatchErrors errors={batchErrors} />
 
         {/* Personnel Form Dialog */}
         <PersonnelForm
