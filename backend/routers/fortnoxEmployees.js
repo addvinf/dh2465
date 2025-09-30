@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getOrRefreshAccessTokenFromApp } from './fortnoxAuth.js';
+import { getOrRefreshAccessTokenFromSession } from './fortnoxAuth.js';
 
 const router = Router();
 
@@ -69,7 +69,7 @@ function mapSupabaseRowToFortnoxEmployee(row) {
 }
 
 async function getAccessTokenFromApp(req) {
-  return await getOrRefreshAccessTokenFromApp(req.app);
+  return await getOrRefreshAccessTokenFromSession(req);
 }
 
 async function postFortnoxEmployee(employee, req) {
