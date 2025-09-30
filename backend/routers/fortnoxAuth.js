@@ -171,12 +171,18 @@ router.get('/callback', async (req, res) => {
   const store = getAppStore(req);
   console.log("store: ", store);
 
+  // Frontend redirect URL
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
   if (oauthError) {
-    return res.status(400).json({ error: 'OAuth error from Fortnox', details: req.query });
+    // Redirect to frontend with error
+    return res.redirect(`${frontendUrl}/?auth=error&message=${encodeURIComponent(oauthError)}`);
   }
-  if (!code) return res.status(400).json({ error: 'Missing code' });
+  if (!code) {
+    return res.redirect(`${frontendUrl}/?auth=error&message=${encodeURIComponent('Missing authorization code')}`);
+  }
   if (!state || !store.states.has(state)) {
-    return res.status(400).json({ error: 'Invalid state' });
+    return res.redirect(`${frontendUrl}/?auth=error&message=${encodeURIComponent('Invalid state parameter')}`);
   }
   store.states.delete(state);
 
@@ -185,9 +191,12 @@ router.get('/callback', async (req, res) => {
     const tokens = await exchangeCodeForTokens(code, redirectUri);
     store.tokens = { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, expiresAt: tokens.expiresAt };
     await writeTokensToDisk(store.tokens);
-    res.status(200).json({ authorized: true, expiresAt: tokens.expiresAt });
+    // Redirect to frontend with success
+    res.redirect(`${frontendUrl}/?auth=success`);
   } catch (e) {
-    res.status(e.status || 500).json({ error: e.message, details: e.response });
+    // Redirect to frontend with error
+    const errorMessage = e.message || 'Authentication failed';
+    res.redirect(`${frontendUrl}/?auth=error&message=${encodeURIComponent(errorMessage)}`);
   }
 });
 
