@@ -166,17 +166,25 @@ router.post('/from-table', async (req, res) => {
   try {
     const created = await postFortnoxEmployee(employee, req);
     const fortnoxEmployeeId = created && created.Employee && created.Employee.EmployeeId;
-    const updatePayload = { added_to_fortnox: true };
-    if (fortnoxEmployeeId !== undefined && fortnoxEmployeeId !== null && String(fortnoxEmployeeId) !== '') {
-      updatePayload.fortnox_employee_id = String(fortnoxEmployeeId);
+    const hasFortnoxId = fortnoxEmployeeId !== undefined && fortnoxEmployeeId !== null && String(fortnoxEmployeeId) !== '';
+    const updatePayload = { added_to_fortnox: true, ...(hasFortnoxId ? { fortnox_employee_id: String(fortnoxEmployeeId), fortnox_id: String(fortnoxEmployeeId) } : {}) };
+
+    let updError = null;
+    let updated = false;
+    const table = 'test_frening_personnel';
+    const attempt1 = await supabase.from(table).update(updatePayload).eq('id', data.id);
+    updError = attempt1.error || null;
+    if (updError && /fortnox_id/i.test(String(updError.message || ''))) {
+      const fallbackPayload = { added_to_fortnox: true, ...(hasFortnoxId ? { fortnox_employee_id: String(fortnoxEmployeeId) } : {}) };
+      const attempt2 = await supabase.from(table).update(fallbackPayload).eq('id', data.id);
+      updError = attempt2.error || null;
+      updated = !updError;
+    } else {
+      updated = !updError;
     }
-    const { error: updError } = await supabase
-      .from('test_frening_personnel')
-      .update(updatePayload)
-      .eq('id', data.id);
 
     if (updError) {
-      return res.status(201).json({ employee, created, warning: 'Fortnox created but flag update failed', flagError: updError.message, fortnoxEmployeeId: fortnoxEmployeeId || null });
+      return res.status(201).json({ employee, created, warning: 'Fortnox created but flag update failed', flagError: updError.message, fortnoxEmployeeId: hasFortnoxId ? String(fortnoxEmployeeId) : null });
     }
 
     res.status(201).json({ employee, created, updatedFlag: true, fortnoxEmployeeId: fortnoxEmployeeId || null });
@@ -242,23 +250,24 @@ router.post('/batch', async (req, res) => {
     try {
       const created = await postFortnoxEmployee(employee, req);
       const fortnoxEmployeeId = created && created.Employee && created.Employee.EmployeeId;
-      const updatePayload = { added_to_fortnox: true };
-      if (fortnoxEmployeeId !== undefined && fortnoxEmployeeId !== null && String(fortnoxEmployeeId) !== '') {
-        updatePayload.fortnox_employee_id = String(fortnoxEmployeeId);
+      const hasFortnoxId = fortnoxEmployeeId !== undefined && fortnoxEmployeeId !== null && String(fortnoxEmployeeId) !== '';
+      const updatePayload = { added_to_fortnox: true, ...(hasFortnoxId ? { fortnox_employee_id: String(fortnoxEmployeeId), fortnox_id: String(fortnoxEmployeeId) } : {}) };
+      const table = 'test_frening_personnel';
+      let { error: updError } = await supabase.from(table).update(updatePayload).eq('id', row.id);
+      if (updError && /fortnox_id/i.test(String(updError.message || ''))) {
+        const fallbackPayload = { added_to_fortnox: true, ...(hasFortnoxId ? { fortnox_employee_id: String(fortnoxEmployeeId) } : {}) };
+        const retry = await supabase.from(table).update(fallbackPayload).eq('id', row.id);
+        updError = retry.error || null;
       }
-      const { error: updError } = await supabase
-        .from('test_frening_personnel')
-        .update(updatePayload)
-        .eq('id', row.id);
 
       if (updError) {
         successes += 1; // Fortnox created, but flag failed
-        items.push({ id: row.id, created, flagUpdated: false, flagError: updError.message, fortnoxEmployeeId: fortnoxEmployeeId || null });
+        items.push({ id: row.id, created, flagUpdated: false, flagError: updError.message, fortnoxEmployeeId: hasFortnoxId ? String(fortnoxEmployeeId) : null });
         continue;
       }
 
       successes += 1;
-      items.push({ id: row.id, created, flagUpdated: true, fortnoxEmployeeId: fortnoxEmployeeId || null });
+      items.push({ id: row.id, created, flagUpdated: true, fortnoxEmployeeId: hasFortnoxId ? String(fortnoxEmployeeId) : null });
     } catch (e) {
       failures += 1;
       items.push({ id: row.id, error: e && e.message ? e.message : 'Unknown error', details: e && e.response ? e.response : undefined });
