@@ -8,11 +8,11 @@ This guide documents the backend endpoints that create and modify database table
   - It creates/updates functions (with SECURITY DEFINER) and enables `pgcrypto` so `gen_random_uuid()` works.
   - Functions created:
     - `normalize_org_name(text)`
-    - `create_if_not_exists_table_with_columns(text, text[], text[])`
-    - `create_org_tables(text, text[], text[], text[], text[], text[], text[])`
-    - `create_org_compensations(text, text[])`
-    - `create_org_monthly_retainer(text, text[])`
-    - `create_org_personnel(text, text[])`
+    - `create_if_not_exists_table_with_columns(text, text[], text[], text[])`
+    - `create_org_tables(text, text[], text[], text[], text[], text[], text[], text[], text[])`
+    - `create_org_compensations(text, text[], text[], text[])`
+    - `create_org_monthly_retainer(text, text[], text[], text[])`
+    - `create_org_personnel(text, text[], text[], text[])`
     - `create_org_all_defaults(text)`
 - Backend environment:
   - `dh2465/backend/.env` must contain:
@@ -142,7 +142,7 @@ This guide documents the backend endpoints that create and modify database table
 ## Expected Columns (defaults)
 - `compensations`: `Upplagd av`, `Avser Mån/år`, `Ledare`, `Kostnadsställe`, `Aktivitetstyp`, `Antal`, `Ersättning`, `Eventuell kommentar`, `Datum utbet`
 - `monthly_retainer`: `Ledare`, `KS`, `Jan`, `Feb`, `Mar`, `Apr`, `Maj`, `Jun`, `Jul`, `Aug`, `Sep`, `Okt`, `Nov`, `Dec`, `Summa`, `Semers`, `TOTALT`, `Soc avg`, `TOT KLUBB`
-- `personnel`: `Upplagd av`, `Personnummer`, `Förnamn`, `Efternamn`, `Clearingnr`, `Bankkonto`, `Adress`, `Postnr`, `Postort`, `E-post`, `Kostnadsställe`, `Ändringsdag`, `Månad`, `Timme`, `Heldag`, `Annan`, `Kommentar`, `added_to_fortnox` (BOOLEAN, default false), `fortnox_employee_id`
+- `personnel`: `Upplagd av`, `Personnummer`, `Förnamn`, `Efternamn`, `Clearingnr`, `Bankkonto`, `Adress`, `Postnr`, `Postort`, `E-post`, `Kostnadsställe`, `Ändringsdag`, `Månad`, `Timme`, `Heldag`, `Annan`, `Kommentar`, `added_to_fortnox` (BOOLEAN default `false`), `fortnox_id`, `fortnox_employee_id`, `Aktiv` (BOOLEAN default `true`), `Skattesats` (NUMERIC default `0`), `Sociala Avgifter` (BOOLEAN default `false`)
 
 ## Troubleshooting
 - Permission denied for schema public:

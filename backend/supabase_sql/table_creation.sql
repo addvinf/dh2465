@@ -14,15 +14,63 @@ RETURNS TEXT SECURITY DEFINER LANGUAGE SQL IMMUTABLE AS $$
   SELECT regexp_replace(lower(trim(name)), '[^a-z0-9_]+', '_', 'g');
 $$;
 
+-- 2) SQL-level schema arrays (single place to edit within SQL)
+-- COMPENSATIONS
+CREATE OR REPLACE FUNCTION schema_compensations_cols()
+RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS $$
+  SELECT ARRAY['Upplagd av', 'Avser Mån/år', 'Ledare', 'Kostnadsställe', 'Aktivitetstyp', 'Antal', 'Ersättning', 'Eventuell kommentar', 'Datum utbet']::TEXT[];
+$$;
+CREATE OR REPLACE FUNCTION schema_compensations_types()
+RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS $$
+  SELECT ARRAY['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT']::TEXT[];
+$$;
+CREATE OR REPLACE FUNCTION schema_compensations_defaults()
+RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS $$
+  SELECT ARRAY[NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL]::TEXT[];
+$$;
+-- MONTHLY RETAINER
+CREATE OR REPLACE FUNCTION schema_monthly_retainer_cols()
+RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS $$
+  SELECT ARRAY['Ledare', 'KS', 'Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec', 'Summa', 'Semers', 'TOTALT', 'Soc avg', 'TOT KLUBB']::TEXT[];
+$$;
+CREATE OR REPLACE FUNCTION schema_monthly_retainer_types()
+RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS $$
+  SELECT ARRAY['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT']::TEXT[];
+$$;
+CREATE OR REPLACE FUNCTION schema_monthly_retainer_defaults()
+RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS $$
+  SELECT ARRAY[NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL]::TEXT[];
+$$;
+-- PERSONNEL
+CREATE OR REPLACE FUNCTION schema_personnel_cols()
+RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS $$
+  SELECT ARRAY['Upplagd av', 'Personnummer', 'Förnamn', 'Efternamn', 'Clearingnr', 'Bankkonto', 'Adress', 'Postnr', 'Postort', 'E-post', 'Kostnadsställe', 'Befattning', 'Ändringsdag', 'Månad', 'Timme', 'Heldag', 'Annan', 'Kommentar', 'added_to_fortnox', 'fortnox_id', 'fortnox_employee_id', 'Aktiv', 'Skattesats', 'Sociala Avgifter']::TEXT[];
+$$;
+CREATE OR REPLACE FUNCTION schema_personnel_types()
+RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS $$
+  SELECT ARRAY['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'BOOLEAN', 'TEXT', 'TEXT', 'BOOLEAN', 'NUMERIC', 'BOOLEAN']::TEXT[];
+$$;
+CREATE OR REPLACE FUNCTION schema_personnel_defaults()
+RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS $$
+  SELECT ARRAY[NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'false', NULL, NULL, 'true', '0', 'false']::TEXT[];
+$$;
+
+
 -- 3) Create tables for an organisation given desired columns for each type.
 --    You pass arrays of column names and Postgres types that mirror your Excel headers.
---    For example: select create_org_tables('acme', ARRAY['col_a','col_b'], ARRAY['text','numeric'], ...);
--- FUNCTION: create_org_tables(text, text[], text[], text[], text[], text[], text[])
+--    For example: SELECT create_org_tables('acme'); -- uses default schemas below
+-- FUNCTION: create_org_tables(text, text[], text[], text[], text[], text[], text[], text[], text[])
 CREATE OR REPLACE FUNCTION create_org_tables(
   org_name TEXT,
-  comp_cols TEXT[], comp_types TEXT[],
-  ret_cols  TEXT[], ret_types TEXT[],
-  pers_cols TEXT[], pers_types TEXT[]
+  comp_cols TEXT[] DEFAULT schema_compensations_cols(),
+  comp_types TEXT[] DEFAULT schema_compensations_types(),
+  comp_defaults TEXT[] DEFAULT schema_compensations_defaults(),
+  ret_cols  TEXT[] DEFAULT schema_monthly_retainer_cols(),
+  ret_types TEXT[] DEFAULT schema_monthly_retainer_types(),
+  ret_defaults TEXT[] DEFAULT schema_monthly_retainer_defaults(),
+  pers_cols TEXT[] DEFAULT schema_personnel_cols(),
+  pers_types TEXT[] DEFAULT schema_personnel_types(),
+  pers_defaults TEXT[] DEFAULT schema_personnel_defaults()
 ) RETURNS VOID
 SECURITY DEFINER
 LANGUAGE PLPGSQL AS $$
@@ -39,25 +87,32 @@ BEGIN
   t_pers := org || '_personnel';
 
   -- Creates a table with id (uuid) pk, created_at default now(), and dynamic excel columns
-  PERFORM create_if_not_exists_table_with_columns(t_comp, comp_cols, comp_types);
-  PERFORM create_if_not_exists_table_with_columns(t_ret,  ret_cols,  ret_types);
-  PERFORM create_if_not_exists_table_with_columns(t_pers, pers_cols, pers_types);
+  PERFORM create_if_not_exists_table_with_columns(t_comp, comp_cols, comp_types, comp_defaults);
+  PERFORM create_if_not_exists_table_with_columns(t_ret,  ret_cols,  ret_types,  ret_defaults);
+  PERFORM create_if_not_exists_table_with_columns(t_pers, pers_cols, pers_types, pers_defaults);
 END;
 $$;
 
 -- 4) Helper that creates a table if not exists with id and created_at and the provided columns.
--- FUNCTION: create_if_not_exists_table_with_columns(text, text[], text[])
+-- FUNCTION: create_if_not_exists_table_with_columns(text, text[], text[], text[])
 CREATE OR REPLACE FUNCTION create_if_not_exists_table_with_columns(
   tbl_name TEXT,
-  col_names TEXT[], col_types TEXT[]
+  col_names TEXT[], col_types TEXT[], col_defaults TEXT[] DEFAULT NULL
 ) RETURNS VOID
 SECURITY DEFINER
 LANGUAGE PLPGSQL AS $$
 DECLARE
   i INT;
+  col_default TEXT;
+  col_def_clause TEXT;
+  col_default_expr TEXT;
 BEGIN
   IF array_length(col_names,1) IS DISTINCT FROM array_length(col_types,1) THEN
     RAISE EXCEPTION 'Column names/types arrays must be same length';
+  END IF;
+
+  IF col_defaults IS NOT NULL AND array_length(col_names,1) IS DISTINCT FROM array_length(col_defaults,1) THEN
+    RAISE EXCEPTION 'Column names/defaults arrays must be same length';
   END IF;
 
   EXECUTE FORMAT('CREATE TABLE IF NOT EXISTS %I (
@@ -67,7 +122,31 @@ BEGIN
 
   -- Add missing columns if needed
   FOR i IN 1..COALESCE(array_length(col_names,1),0) LOOP
-    EXECUTE FORMAT('ALTER TABLE %I ADD COLUMN IF NOT EXISTS %I %s', tbl_name, col_names[i], col_types[i]);
+    col_default := NULL;
+    IF col_defaults IS NOT NULL THEN
+      col_default := col_defaults[i];
+    END IF;
+
+    col_default_expr := NULL;
+    IF col_default IS NOT NULL THEN
+      IF col_default ILIKE 'RAW:%' THEN
+        col_default_expr := substring(col_default FROM 5);
+      ELSE
+        col_default_expr := col_default;
+      END IF;
+    END IF;
+
+    col_def_clause := '';
+    IF col_default_expr IS NOT NULL THEN
+      col_def_clause := ' DEFAULT ' || col_default_expr;
+    END IF;
+
+    EXECUTE FORMAT('ALTER TABLE %I ADD COLUMN IF NOT EXISTS %I %s%s', tbl_name, col_names[i], col_types[i], col_def_clause);
+
+    IF col_default_expr IS NOT NULL THEN
+      EXECUTE FORMAT('ALTER TABLE %I ALTER COLUMN %I SET DEFAULT %s', tbl_name, col_names[i], col_default_expr);
+      EXECUTE FORMAT('UPDATE %I SET %I = %s WHERE %I IS NULL', tbl_name, col_names[i], col_default_expr, col_names[i]);
+    END IF;
   END LOOP;
 
   -- Ensure Row Level Security is enabled (idempotent)
@@ -75,57 +154,53 @@ BEGIN
 END;
 $$;
 
--- FUNCTION: create_org_compensations(text)
-CREATE OR REPLACE FUNCTION create_org_compensations(org_name TEXT, cols TEXT[] DEFAULT
-  ARRAY['Upplagd av','Avser Mån/år','Ledare','Kostnadsställe','Aktivitetstyp','Antal','Ersättning','Eventuell kommentar','Datum utbet']
+CREATE OR REPLACE FUNCTION create_org_compensations(
+  org_name TEXT,
+  cols TEXT[] DEFAULT schema_compensations_cols(),
+  types TEXT[] DEFAULT schema_compensations_types(),
+  defaults TEXT[] DEFAULT schema_compensations_defaults()
 )
 RETURNS VOID SECURITY DEFINER LANGUAGE PLPGSQL AS $$
 DECLARE
   org TEXT;
 BEGIN
   org := normalize_org_name(org_name);
-  PERFORM create_if_not_exists_table_with_columns(org || '_compensations', cols, (SELECT array(SELECT 'TEXT' FROM unnest(cols))));
+  PERFORM create_if_not_exists_table_with_columns(org || '_compensations', cols, types, defaults);
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION create_org_monthly_retainer(org_name TEXT, cols TEXT[] DEFAULT
-  ARRAY['Ledare','KS','Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec','Summa','Semers','TOTALT','Soc avg','TOT KLUBB']
+CREATE OR REPLACE FUNCTION create_org_monthly_retainer(
+  org_name TEXT,
+  cols TEXT[] DEFAULT schema_monthly_retainer_cols(),
+  types TEXT[] DEFAULT schema_monthly_retainer_types(),
+  defaults TEXT[] DEFAULT schema_monthly_retainer_defaults()
 )
 RETURNS VOID SECURITY DEFINER LANGUAGE PLPGSQL AS $$
 DECLARE
   org TEXT;
 BEGIN
   org := normalize_org_name(org_name);
-  PERFORM create_if_not_exists_table_with_columns(org || '_monthly_retainer', cols, (SELECT array(SELECT 'TEXT' FROM unnest(cols))));
+  PERFORM create_if_not_exists_table_with_columns(org || '_monthly_retainer', cols, types, defaults);
 END;
 $$;
 
 -- FUNCTION: create_org_personnel(text)
-CREATE OR REPLACE FUNCTION create_org_personnel(org_name TEXT, cols TEXT[] DEFAULT
-  ARRAY['Upplagd av','Personnummer','Förnamn','Efternamn','Clearingnr','Bankkonto','Adress','Postnr','Postort','E-post','Kostnadsställe','Ändringsdag','Månad','Timme','Heldag','Annan','Kommentar',
-        'added_to_fortnox','fortnox_employee_id']
+CREATE OR REPLACE FUNCTION create_org_personnel(
+  org_name TEXT,
+  cols TEXT[] DEFAULT schema_personnel_cols(),
+  types TEXT[] DEFAULT schema_personnel_types(),
+  defaults TEXT[] DEFAULT schema_personnel_defaults()
 )
 RETURNS VOID SECURITY DEFINER LANGUAGE PLPGSQL AS $$
 DECLARE
   org TEXT;
   tbl TEXT;
-  col_types TEXT[];
   idx_name TEXT;
 BEGIN
   org := normalize_org_name(org_name);
   tbl := org || '_personnel';
 
-  -- Build types: BOOLEAN for added_to_fortnox, TEXT otherwise
-  SELECT ARRAY_AGG(CASE WHEN c = 'added_to_fortnox' THEN 'BOOLEAN' ELSE 'TEXT' END)
-    INTO col_types
-  FROM UNNEST(cols) AS c;
-
-  PERFORM create_if_not_exists_table_with_columns(tbl, cols, col_types);
-
-  -- Ensure default false on added_to_fortnox
-  EXECUTE FORMAT('ALTER TABLE %I ALTER COLUMN %I SET DEFAULT false', tbl, 'added_to_fortnox');
-  -- Backfill NULLs to false (idempotent)
-  EXECUTE FORMAT('UPDATE %I SET %I = false WHERE %I IS NULL', tbl, 'added_to_fortnox', 'added_to_fortnox');
+  PERFORM create_if_not_exists_table_with_columns(tbl, cols, types, defaults);
 
   -- Unique index on email (case-insensitive), if column exists
   idx_name := tbl || '_email_uniq';
@@ -138,9 +213,27 @@ $$;
 CREATE OR REPLACE FUNCTION create_org_all_defaults(org_name TEXT)
 RETURNS VOID SECURITY DEFINER LANGUAGE PLPGSQL AS $$
 BEGIN
-  PERFORM create_org_compensations(org_name);
-  PERFORM create_org_monthly_retainer(org_name);
-  PERFORM create_org_personnel(org_name);
+  -- call the explicit-argument variants to avoid overload ambiguity
+  PERFORM create_org_compensations(
+    org_name,
+    schema_compensations_cols(),
+    schema_compensations_types(),
+    schema_compensations_defaults()
+  );
+
+  PERFORM create_org_monthly_retainer(
+    org_name,
+    schema_monthly_retainer_cols(),
+    schema_monthly_retainer_types(),
+    schema_monthly_retainer_defaults()
+  );
+
+  PERFORM create_org_personnel(
+    org_name,
+    schema_personnel_cols(),
+    schema_personnel_types(),
+    schema_personnel_defaults()
+  );
 END;
 $$;
 
@@ -149,10 +242,13 @@ $$;
 -- For compensations: ["employee", "amount", "month"]
 -- For monthly_retainer: ["client", "retainer", "from_month"]
 -- For personnel: ["name", "role", "hours"]
--- You can call (adjust types accordingly):
--- select public.create_org_tables(
+-- You can call (adjust arrays accordingly):
+-- SELECT create_org_tables(
 --   'acme',
---   ARRAY['employee','amount','month'], ARRAY['text','numeric','text'],
---   ARRAY['client','retainer','from_month'], ARRAY['text','numeric','text'],
---   ARRAY['name','role','hours'], ARRAY['text','text','numeric']
+--   ARRAY['employee','amount','month'], ARRAY['text','numeric','text'], ARRAY[NULL, NULL, NULL],
+--   ARRAY['client','retainer','from_month'], ARRAY['text','numeric','text'], ARRAY[NULL, NULL, NULL],
+--   ARRAY['name','role','hours'], ARRAY['text','text','numeric'], ARRAY[NULL, NULL, NULL]
 -- );
+--
+-- For the default schemas defined in this file you can simply run:
+-- SELECT create_org_tables('acme');
