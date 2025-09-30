@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Core Brand Colors */
+    --background: 0 0% 100%;
+    --foreground: 215 25% 27%;
+
+    /* Financial Blue Palette */
+    /* --primary: 214 84% 56%; */
+    --primary: 218 27.6% 39%;
+    --primary-foreground: 0 0% 100%;
+    --primary-muted: 214 50% 95%;
+
+    /* Success Green */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-muted: 142 50% 96%;
+
+    /* Warning Amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-muted: 38 90% 96%;
+
+    /* Card System */
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 27%;
+    --card-border: 214 20% 91%;
+    /* --card-border: 205 13.3% 17.6%; */
+
+    /* Interface Elements */
+    --secondary: 214 13% 95%;
+    --secondary-foreground: 215 25% 27%;
+
+    --muted: 214 13% 97%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 214 50% 95%;
+    --accent-foreground: 214 84% 56%;
+
+    --border: 214 20% 91%;
+    --input: 214 20% 91%;
+    --ring: 214 84% 56%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(218 27.6% 39%),
+      hsl(205 13.3% 17.6%)
+    );
+    --gradient-success: linear-gradient(
+      135deg,
+      hsl(142 71% 45%),
+      hsl(142 71% 55%)
+    );
+    --gradient-subtle: linear-gradient(
+      180deg,
+      hsl(0 0% 100%),
+      hsl(214 13% 98%)
+    );
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(215 25% 27% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(215 25% 27% / 0.1),
+      0 2px 4px -1px hsl(215 25% 27% / 0.06);
+    --shadow-lg: 0 10px 15px -3px hsl(215 25% 27% / 0.1),
+      0 4px 6px -2px hsl(215 25% 27% / 0.05);
+    --shadow-financial: 0 4px 12px hsl(214 84% 56% / 0.15);
+
+    /* Layout */
+    --radius: 6px;
+    --radius-sm: 3px;
+    --radius-lg: 10px;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    color-scheme: dark;
+  }
+
+  .dark {
+    --background: 0 0% 8%; /* Almost black */
+    --foreground: 0 0% 92%; /* Light gray text */
+
+    --primary: 0 0% 16%; /* Dark gray for main elements */
+    --primary-foreground: 0 0% 100%; /* White text on dark */
+    --primary-muted: 0 0% 12%; /* Slightly lighter than background */
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-muted: 142 71% 20%;
+
+    --warning: 38 92% 60%;
+    --warning-foreground: 0 0% 100%;
+    --warning-muted: 38 92% 20%;
+
+    --card: 0 0% 12%; /* Slightly lighter than background */
+    --card-foreground: 0 0% 92%;
+    --card-border: 0 0% 20%;
+
+    --secondary: 215 20% 52.94%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-muted: 215 20% 27%;
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 0 0% 24%;
+    --accent-foreground: 0 0% 92%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 16%;
+    --ring: 0 0% 40%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  .financial-card {
+    @apply bg-card border-transparent rounded-lg shadow-[var(--shadow-md)] p-6;
+  }
+
+  .financial-gradient {
+    background: var(--gradient-primary);
+  }
+
+  .financial-shadow {
+    box-shadow: var(--shadow-financial);
+  }
+}
+
+@layer utilities {
+  .frosted {
+    background: rgba(30, 30, 30, 0.7); /* TODO: HARDCODED */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  .frosted-box {
+    @apply frosted w-full max-w-4xl mx-auto rounded-2xl px-6 py-6 shadow-lg;
+    transform: translate(-50%, -50%);
+  }
+}
