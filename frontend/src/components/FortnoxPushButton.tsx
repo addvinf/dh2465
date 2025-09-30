@@ -1,25 +1,38 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "./ui/Button";
 import fortnoxLogo from "../assets/fortnox_logo.png";
 import { pushEmployeesBatch } from "../services/fortnoxEmployeesService";
 import { toast } from "../hooks/use-toast";
+import { checkFortnoxAuthStatus, initiateFortnoxLogin } from "../services/fortnoxService";
 
 interface FortnoxPushButtonProps {
-  checking: boolean;
-  authorized: boolean;
-  onAuth: () => void;
   onComplete?: (result: { failures: number; successes: number; items: any[] }) => void | Promise<void>;
   className?: string;
 }
 
-export const FortnoxPushButton: React.FC<FortnoxPushButtonProps> = ({
-  checking,
-  authorized,
-  onAuth,
-  onComplete,
-  className,
-}) => {
+export const FortnoxPushButton: React.FC<FortnoxPushButtonProps> = ({ onComplete, className }) => {
   const [pushing, setPushing] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [authorized, setAuthorized] = useState<boolean>(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      try {
+        setChecking(true);
+        const status = await checkFortnoxAuthStatus();
+        if (!cancelled) setAuthorized(Boolean(status.authorized));
+      } catch (_) {
+        if (!cancelled) setAuthorized(false);
+      } finally {
+        if (!cancelled) setChecking(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handlePush = async () => {
     if (!authorized || checking || pushing) return;
@@ -56,7 +69,10 @@ export const FortnoxPushButton: React.FC<FortnoxPushButtonProps> = ({
             <button
               type="button"
               className="underline text-white hover:opacity-80"
-              onClick={onAuth}
+              onClick={() => {
+                toast({ title: "Omdirigerar till Fortnox", description: "Slutför autentisering..." });
+                initiateFortnoxLogin();
+              }}
             >
               Autentisera nu
             </button>

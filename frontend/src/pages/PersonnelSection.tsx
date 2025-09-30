@@ -8,7 +8,7 @@ import { Plus, Upload, RefreshCw } from "lucide-react";
 import { Header } from "../components/Header";
 import FortnoxPushButton from "../components/FortnoxPushButton";
 import FortnoxBatchErrors from "../components/FortnoxBatchErrors";
-import { checkFortnoxAuthStatus, initiateFortnoxLogin } from "../services/fortnoxService";
+// Fortnox auth status handled by FortnoxPushButton
 import { useRef, useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { ExcelViewer } from "../components/ExcelViewer";
@@ -28,8 +28,7 @@ export function PersonnelSection() {
   >();
   const [formLoading, setFormLoading] = useState(false);
   const [batchErrors, setBatchErrors] = useState<any[]>([]);
-  const [checkingFortnox, setCheckingFortnox] = useState(true);
-  const [fortnoxAuthorized, setFortnoxAuthorized] = useState<boolean>(false);
+  // Fortnox auth status now handled inside FortnoxPushButton
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [viewerData, setViewerData] = useState<any[][]>([]);
@@ -53,20 +52,7 @@ export function PersonnelSection() {
 
   useEffect(() => {
     loadPersonnel();
-    refreshFortnoxStatus();
   }, []);
-
-  const refreshFortnoxStatus = async () => {
-    try {
-      setCheckingFortnox(true);
-      const status = await checkFortnoxAuthStatus();
-      setFortnoxAuthorized(Boolean(status.authorized));
-    } catch (_) {
-      setFortnoxAuthorized(false);
-    } finally {
-      setCheckingFortnox(false);
-    }
-  };
 
   const handleAddPerson = () => {
     setEditingRecord(undefined);
@@ -183,16 +169,7 @@ export function PersonnelSection() {
               <Plus className="mr-2 h-4 w-4" />
               Lägg till person
             </Button>
-            <FortnoxPushButton
-              className="mr-2"
-              checking={checkingFortnox}
-              authorized={fortnoxAuthorized}
-              onComplete={handlePushComplete}
-              onAuth={() => {
-                toast({ title: "Omdirigerar till Fortnox", description: "Slutför autentisering..." });
-                initiateFortnoxLogin();
-              }}
-            />
+            <FortnoxPushButton className="mr-2" onComplete={handlePushComplete} />
           </div>
         </div>
 
