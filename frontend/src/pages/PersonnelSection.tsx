@@ -6,8 +6,7 @@ import {
 } from "../services/personnelService";
 import { Plus, Upload, RefreshCw } from "lucide-react";
 import { Header } from "../components/Header";
-import { pushEmployeesBatch } from "../services/fortnoxEmployeesService";
-import fortnoxLogo from "../assets/fortnox_logo.png";
+import FortnoxPushButton from "../components/FortnoxPushButton";
 import { checkFortnoxAuthStatus, initiateFortnoxLogin } from "../services/fortnoxService";
 import { useRef, useState, useEffect } from "react";
 import * as XLSX from "xlsx";
@@ -27,7 +26,6 @@ export function PersonnelSection() {
     PersonnelRecord | undefined
   >();
   const [formLoading, setFormLoading] = useState(false);
-  const [pushing, setPushing] = useState(false);
   const [batchErrors, setBatchErrors] = useState<any[]>([]);
   const [checkingFortnox, setCheckingFortnox] = useState(true);
   const [fortnoxAuthorized, setFortnoxAuthorized] = useState<boolean>(false);
@@ -104,29 +102,10 @@ export function PersonnelSection() {
     }
   };
 
-  const handlePushToFortnox = async () => {
-    if (!fortnoxAuthorized) {
-      toast({ description: "Logga in i Fortnox innan du skickar.", variant: "destructive" });
-      return;
-    }
-    setPushing(true);
-    try {
-      toast({ description: "Startar export till Fortnox..." });
-      const result = await pushEmployeesBatch({ dryRun: false });
-      const errors = (result.items || []).filter((i) => i.error);
-      setBatchErrors(errors);
-      if (result.failures === 0) {
-        toast({ description: `Export klar: ${result.successes} st skickade.` });
-      } else {
-        toast({ description: `Delvis klar: ${result.successes} ok, ${result.failures} fel.`, variant: "destructive" });
-      }
-      // Refresh table to reflect added_to_fortnox flags
-      await loadPersonnel();
-    } catch (e: any) {
-      toast({ description: e?.message || "Misslyckades att skicka till Fortnox", variant: "destructive" });
-    } finally {
-      setPushing(false);
-    }
+  const handlePushComplete = async (result: { failures: number; successes: number; items: any[] }) => {
+    const errors = (result.items || []).filter((i) => i.error);
+    setBatchErrors(errors);
+    await loadPersonnel();
   };
 
   // Handle file upload and parse
@@ -203,53 +182,16 @@ export function PersonnelSection() {
               <Plus className="mr-2 h-4 w-4" />
               Lägg till person
             </Button>
-            {/* Fortnox auth: status above button without affecting alignment */}
-            <div className="relative mr-2">
-              <div className="absolute -top-5 left-0 text-xs text-muted-foreground leading-none">
-                {checkingFortnox ? (
-                  <span className="flex items-center gap-2">
-                    <span className="inline-block h-3 w-3 animate-spin rounded-full border border-border border-t-transparent"></span>
-                    Kontrollerar Fortnox...
-                  </span>
-                ) : fortnoxAuthorized ? (
-                  <span className="text-green-600 dark:text-green-500">Fortnox är autentiserat</span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <span className="text-destructive">Ej inloggad</span>
-                    <button
-                      type="button"
-                      className="underline text-white hover:opacity-80"
-                      onClick={() => {
-                        toast({ title: "Omdirigerar till Fortnox", description: "Slutför autentisering..." });
-                        initiateFortnoxLogin();
-                      }}
-                    >
-                      Autentisera nu
-                    </button>
-                  </span>
-                )}
-              </div>
-              <Button
-              className={`text-white ${pushing ? 'opacity-80 cursor-not-allowed' : ''}`}
-              style={{ backgroundColor: '#065f46' }}
-              onClick={handlePushToFortnox}
-                disabled={pushing || checkingFortnox || !fortnoxAuthorized}
-                title={!fortnoxAuthorized ? 'Logga in i Fortnox först' : undefined}
-              >
-              {pushing ? (
-                <span className="flex items-center">
-                  <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-                  <img src={fortnoxLogo} alt="Fortnox" className="h-4 w-4 mr-2" />
-                  Skickar...
-                </span>
-              ) : (
-                <span className="flex items-center">
-                  <img src={fortnoxLogo} alt="Fortnox" className="h-5 w-5 mr-2" />
-                  Push to Fortnox
-                </span>
-              )}
-              </Button>
-            </div>
+            <FortnoxPushButton
+              className="mr-2"
+              checking={checkingFortnox}
+              authorized={fortnoxAuthorized}
+              onComplete={handlePushComplete}
+              onAuth={() => {
+                toast({ title: "Omdirigerar till Fortnox", description: "Slutför autentisering..." });
+                initiateFortnoxLogin();
+              }}
+            />
           </div>
         </div>
 
