@@ -105,6 +105,10 @@ export function PersonnelSection() {
   };
 
   const handlePushToFortnox = async () => {
+    if (!fortnoxAuthorized) {
+      toast({ description: "Logga in i Fortnox innan du skickar.", variant: "destructive" });
+      return;
+    }
     setPushing(true);
     try {
       toast({ description: "Startar export till Fortnox..." });
@@ -214,7 +218,7 @@ export function PersonnelSection() {
                     <span className="text-destructive">Ej inloggad</span>
                     <button
                       type="button"
-                      className="underline text-primary hover:opacity-80"
+                      className="underline text-white hover:opacity-80"
                       onClick={() => {
                         toast({ title: "Omdirigerar till Fortnox", description: "Slutför autentisering..." });
                         initiateFortnoxLogin();
@@ -229,7 +233,8 @@ export function PersonnelSection() {
               className={`text-white ${pushing ? 'opacity-80 cursor-not-allowed' : ''}`}
               style={{ backgroundColor: '#065f46' }}
               onClick={handlePushToFortnox}
-              disabled={pushing}
+                disabled={pushing || checkingFortnox || !fortnoxAuthorized}
+                title={!fortnoxAuthorized ? 'Logga in i Fortnox först' : undefined}
               >
               {pushing ? (
                 <span className="flex items-center">
