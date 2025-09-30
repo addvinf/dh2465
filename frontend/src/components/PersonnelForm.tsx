@@ -70,11 +70,25 @@ export function PersonnelForm({
     }
   };
 
-  const handleInputChange = (key: keyof PersonnelRecord, value: string) => {
+  const handleInputChange = (
+    key: keyof PersonnelRecord,
+    value: string | boolean | number
+  ) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
     // Clear error when user starts typing
-    if (errors[key]) {
-      setErrors((prev) => ({ ...prev, [key]: "" }));
+    if (errors[String(key)]) {
+      setErrors((prev) => ({ ...prev, [String(key)]: "" }));
+    }
+  };
+
+  const handleCheckboxChange = (
+    key: keyof PersonnelRecord,
+    checked: boolean
+  ) => {
+    setFormData((prev) => ({ ...prev, [key]: checked }));
+    // Clear error when user changes checkbox
+    if (errors[String(key)]) {
+      setErrors((prev) => ({ ...prev, [String(key)]: "" }));
     }
   };
 
@@ -119,24 +133,52 @@ export function PersonnelForm({
                       <span className="text-destructive ml-1">*</span>
                     )}
                   </label>
-                  <Input
-                    type={getInputType(column.type)}
-                    value={
-                      typeof formData[column.key] === "boolean"
-                        ? ""
-                        : (formData[column.key] as
-                            | string
-                            | number
-                            | undefined) || ""
-                    }
-                    onChange={(e) =>
-                      handleInputChange(column.key, e.target.value)
-                    }
-                    className={
-                      errors[String(column.key)] ? "border-destructive" : ""
-                    }
-                    placeholder={`Ange ${column.label.toLowerCase()}`}
-                  />
+
+                  {column.type === "boolean" ? (
+                    <div className="flex items-center space-x-2 mt-1">
+                      <input
+                        type="checkbox"
+                        checked={!!formData[column.key]}
+                        onChange={(e) =>
+                          handleCheckboxChange(column.key, e.target.checked)
+                        }
+                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {column.key === "Aktiv"
+                          ? "Person är aktiv"
+                          : column.key === "Sociala Avgifter"
+                          ? "Inkludera sociala avgifter"
+                          : "Ja"}
+                      </span>
+                    </div>
+                  ) : (
+                    <Input
+                      type={getInputType(column.type)}
+                      value={
+                        typeof formData[column.key] === "boolean"
+                          ? ""
+                          : (formData[column.key] as
+                              | string
+                              | number
+                              | undefined) || ""
+                      }
+                      onChange={(e) =>
+                        handleInputChange(
+                          column.key,
+                          column.type === "number"
+                            ? parseFloat(e.target.value) || 0
+                            : e.target.value
+                        )
+                      }
+                      className={
+                        errors[String(column.key)] ? "border-destructive" : ""
+                      }
+                      placeholder={`Ange ${column.label.toLowerCase()}`}
+                      step={column.type === "number" ? "0.1" : undefined}
+                    />
+                  )}
+
                   {errors[String(column.key)] && (
                     <span className="text-xs text-destructive mt-1">
                       {errors[String(column.key)]}

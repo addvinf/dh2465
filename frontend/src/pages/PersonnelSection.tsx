@@ -3,6 +3,7 @@ import {
   fetchPersonnel,
   addPersonnel,
   updatePersonnel,
+  togglePersonnelStatus,
 } from "../services/personnelService";
 import { Plus, Upload, RefreshCw } from "lucide-react";
 import { Header } from "../components/Header";
@@ -12,12 +13,13 @@ import { ExcelViewer } from "../components/ExcelViewer";
 import { toast } from "../hooks/use-toast";
 import { PersonnelTable } from "../components/PersonnelTable";
 import { PersonnelForm } from "../components/PersonnelForm";
-import type { PersonnelRecord } from "../types/personnel";
+import type { PersonnelRecord, ViewMode } from "../types/personnel";
 
 export function PersonnelSection() {
   const [personnel, setPersonnel] = useState<PersonnelRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("personal");
   const [viewerOpen, setViewerOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<
@@ -106,8 +108,29 @@ export function PersonnelSection() {
     reader.readAsArrayBuffer(file);
   };
 
+  const handleToggleStatus = async (record: PersonnelRecord) => {
+    try {
+      // Use the dedicated toggle endpoint
+      await togglePersonnelStatus("test_förening", record.id!);
+
+      toast({
+        description: `${record["Förnamn"]} ${record["Efternamn"]} är nu ${
+          !record.Aktiv ? "aktiv" : "inaktiv"
+        }`,
+        variant: "default",
+      });
+
+      await loadPersonnel(); // Reload data
+    } catch (err) {
+      toast({
+        description: "Kunde inte uppdatera status",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Save from ExcelViewer - would need additional processing to convert to PersonnelRecord[]
-  const handleViewerSave = (data: any[][]) => {
+  const handleViewerSave = (_data: any[][]) => {
     // This would need proper conversion from array format to PersonnelRecord format
     toast({
       description: "Excel import inte helt implementerad än",
@@ -168,6 +191,9 @@ export function PersonnelSection() {
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           onEdit={handleEditPerson}
+          onToggleStatus={handleToggleStatus}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
 
         {/* Personnel Form Dialog */}

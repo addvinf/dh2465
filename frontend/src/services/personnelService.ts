@@ -13,10 +13,19 @@ export async function fetchPersonnel(org: string): Promise<{ data: PersonnelReco
 }
 
 export async function addPersonnel(org: string, person: Partial<PersonnelRecord>): Promise<PersonnelRecord> {
+  // Set default values for new fields
+  const personWithDefaults = {
+    Aktiv: true, // Default to active
+    Befattning: person.Befattning || "",
+    "Skattesats": person["Skattesats"] || 30,
+    "Sociala Avgifter": person["Sociala Avgifter"] || true,
+    ...person,
+  };
+
   const res = await fetch(`http://localhost:3000/api/org/${encodeURIComponent(org)}/personnel`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(person),
+    body: JSON.stringify(personWithDefaults),
   });
   if (!res.ok) throw new Error("Kunde inte lägga till person");
   return await res.json();
@@ -30,6 +39,16 @@ export async function updatePersonnel(org: string, id: string, person: Partial<P
   });
   if (!res.ok) throw new Error("Kunde inte uppdatera person");
   return await res.json();
+}
+
+export async function togglePersonnelStatus(org: string, id: string): Promise<PersonnelRecord> {
+  const res = await fetch(`http://localhost:3000/api/org/${encodeURIComponent(org)}/personnel/${id}/toggle-status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error("Kunde inte ändra status");
+  const response = await res.json();
+  return response.data || response;
 }
 
 export async function deletePersonnel(org: string, id: string): Promise<void> {
