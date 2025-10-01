@@ -66,7 +66,12 @@ export function PersonnelForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      onSubmit(formData);
+      // Ensure new persons are always set to active
+      const submissionData = {
+        ...formData,
+        Aktiv: initialData.id ? formData.Aktiv : true, // Only set to true for new persons
+      };
+      onSubmit(submissionData);
     }
   };
 
@@ -98,6 +103,8 @@ export function PersonnelForm({
         return "email";
       case "number":
         return "number";
+      case "date":
+        return "date";
       default:
         return "text";
     }

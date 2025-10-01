@@ -15,11 +15,16 @@ export async function fetchPersonnel(org: string): Promise<{ data: PersonnelReco
 export async function addPersonnel(org: string, person: Partial<PersonnelRecord>): Promise<PersonnelRecord> {
   // Set default values for new fields
   const personWithDefaults = {
-    Aktiv: true, // Default to active
     Befattning: person.Befattning || "",
     "Skattesats": person["Skattesats"] || 30,
-    "Sociala Avgifter": person["Sociala Avgifter"] || true,
+    "Sociala Avgifter": person["Sociala Avgifter"] !== undefined ? person["Sociala Avgifter"] : true,
+    "Ändringsdag": person["Ändringsdag"] || new Date().toISOString().split('T')[0], // Default to today
+    "Månad": person["Månad"] || 0,
+    "Timme": person["Timme"] || 0,
+    "Heldag": person["Heldag"] || 0,
     ...person,
+    // Ensure Aktiv is always true for new persons
+    Aktiv: true,
   };
 
   const res = await fetch(`http://localhost:3000/api/org/${encodeURIComponent(org)}/personnel`, {

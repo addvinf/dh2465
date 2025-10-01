@@ -61,11 +61,34 @@ export function PersonnelTableBody({
         return value ? (
           <Check className="h-4 w-4 text-green-600" />
         ) : (
-          <X className="h-4 w-4 text-red-600" />
+          <X className="h-4 w-4 text-gray-400" />
         );
 
       case "number":
-        return typeof value === "number" ? `${value}%` : String(value || "");
+        // Handle different number types
+        if (column.key === "Skattesats") {
+          return typeof value === "number" ? `${value}%` : String(value || "");
+        } else if (
+          column.key === "Månad" ||
+          column.key === "Timme" ||
+          column.key === "Heldag"
+        ) {
+          return typeof value === "number"
+            ? `${value} kr`
+            : String(value || "");
+        }
+        return String(value || "");
+
+      case "date":
+        if (value && typeof value === "string") {
+          try {
+            const date = new Date(value);
+            return date.toLocaleDateString("sv-SE"); // Swedish date format
+          } catch {
+            return String(value);
+          }
+        }
+        return "";
 
       default:
         return (

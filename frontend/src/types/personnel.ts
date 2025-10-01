@@ -65,9 +65,12 @@ export const FINANCIAL_VIEW_COLUMNS: PersonnelColumn[] = [
   { key: "Kostnadsställe", label: "Kostnadsställe", visible: true, sortable: true, searchable: true },
   { key: "Skattesats", label: "Skattesats", visible: true, type: 'number' },
   { key: "Sociala Avgifter", label: "Sociala Avgifter", visible: true, type: 'boolean' },
-];
-
-// Legacy column definition for backwards compatibility
+  { key: "Ändringsdag", label: "Anställningsdag", visible: true, type: 'date' },
+  { key: "Månad", label: "Månad", visible: true, type: 'number' },
+  { key: "Timme", label: "Timme", visible: true, type: 'number' },
+  { key: "Heldag", label: "Heldag", visible: true, type: 'number' },
+  
+];// Legacy column definition for backwards compatibility
 export const PERSONNEL_COLUMNS: PersonnelColumn[] = PERSONAL_VIEW_COLUMNS;
 
 // Columns for form input (excluding system fields)
@@ -77,7 +80,6 @@ export const FORM_COLUMNS: PersonnelColumn[] = [
   { key: "Personnummer", label: "Personnummer", visible: true, type: 'text' },
   { key: "E-post", label: "E-post", visible: true, type: 'email' },
   { key: "Befattning", label: "Befattning", visible: true, type: 'text' },
-  { key: "Aktiv", label: "Aktiv", visible: true, type: 'boolean' },
   { key: "Clearingnr", label: "Clearingnummer", visible: true, type: 'text' },
   { key: "Bankkonto", label: "Bankkonto", visible: true, type: 'text' },
   { key: "Adress", label: "Adress", visible: true, type: 'text' },
@@ -86,6 +88,10 @@ export const FORM_COLUMNS: PersonnelColumn[] = [
   { key: "Kostnadsställe", label: "Kostnadsställe", visible: true, type: 'text' },
   { key: "Skattesats", label: "Skattesats", visible: true, type: 'number' },
   { key: "Sociala Avgifter", label: "Sociala Avgifter", visible: true, type: 'boolean' },
+  { key: "Ändringsdag", label: "Anställningsdag", visible: true, type: 'date' },
+  { key: "Månad", label: "Månadslön", visible: true, type: 'number' },
+  { key: "Timme", label: "Timlön", visible: true, type: 'number' },
+  { key: "Heldag", label: "Heldagslön", visible: true, type: 'number' },
   { key: "Kommentar", label: "Kommentar", visible: true, type: 'text' },
 ];
 
