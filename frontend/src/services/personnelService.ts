@@ -62,3 +62,17 @@ export async function deletePersonnel(org: string, id: string): Promise<void> {
   });
   if (!res.ok) throw new Error("Kunde inte ta bort person");
 }
+
+export async function bulkUpdatePersonnel(
+  org: string,
+  personnelData: Partial<PersonnelRecord>[]
+): Promise<{ added: number; updated: number; errors: string[] }> {
+  const res = await fetch(`http://localhost:3000/api/org/${encodeURIComponent(org)}/personnel/bulk`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ personnel: personnelData }),
+  });
+  
+  if (!res.ok) throw new Error("Kunde inte genomföra bulk-uppdatering");
+  return await res.json();
+}

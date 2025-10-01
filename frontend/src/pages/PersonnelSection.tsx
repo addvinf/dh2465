@@ -99,11 +99,46 @@ export function PersonnelSection() {
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-      if (jsonData.length > 1) {
-        setViewerData(jsonData.slice(1) as any[][]);
-        setViewerHeaders(jsonData[0] as string[]);
-        setViewerFileName(file.name);
-        setViewerOpen(true);
+
+      if (jsonData.length > 2) {
+        // Look for the actual header row by checking for expected column names
+        let headerRowIndex = 0;
+        let dataStartIndex = 1;
+
+        // Check if first row contains headers or just labels
+        const firstRow = jsonData[0] as string[];
+
+        // If first row doesn't contain our expected headers, use second row
+        if (
+          firstRow &&
+          firstRow.some(
+            (cell) =>
+              cell?.includes("Tränarersättning") || !cell?.includes("Förnamn")
+          )
+        ) {
+          headerRowIndex = 1;
+          dataStartIndex = 2;
+        }
+
+        const headers = jsonData[headerRowIndex] as string[];
+        const dataRows = jsonData.slice(dataStartIndex) as any[][];
+
+        if (headers && dataRows.length > 0) {
+          setViewerHeaders(headers);
+          setViewerData(dataRows);
+          setViewerFileName(file.name);
+          setViewerOpen(true);
+        } else {
+          toast({
+            description: "Ingen giltig data hittades i filen",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          description: "Filen innehåller inte tillräckligt med data",
+          variant: "destructive",
+        });
       }
     };
     reader.readAsArrayBuffer(file);
@@ -157,14 +192,180 @@ export function PersonnelSection() {
     }
   };
 
-  // Save from ExcelViewer - would need additional processing to convert to PersonnelRecord[]
-  const handleViewerSave = (_data: any[][]) => {
-    // This would need proper conversion from array format to PersonnelRecord format
-    toast({
-      description: "Excel import inte helt implementerad än",
-      variant: "destructive",
-    });
-    setViewerOpen(false);
+  // Save from ExcelViewer - convert Excel data to PersonnelRecord format and handle add/update
+  const handleViewerSave = async (data: any[][]) => {
+    if (!data.length || !viewerHeaders.length) {
+      toast({
+        description: "Ingen data att spara",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Convert Excel data to PersonnelRecord format
+      const personnelRecords: Partial<PersonnelRecord>[] = data.map((row) => {
+        const record: Partial<PersonnelRecord> = {};
+
+        viewerHeaders.forEach((header, index) => {
+          const value = row[index];
+
+          // Map CSV headers to PersonnelRecord keys and handle type conversion
+          switch (header) {
+            case "Upplagd av":
+              record["Upplagd av"] = String(value || "Admin");
+              break;
+            case "Personnummer":
+              record["Personnummer"] = String(value || "");
+              break;
+            case "Förnamn":
+              record["Förnamn"] = String(value || "");
+              break;
+            case "Efternamn":
+              record["Efternamn"] = String(value || "");
+              break;
+            case "Clearingnr":
+              record["Clearingnr"] = String(value || "");
+              break;
+            case "Bankkonto":
+              record["Bankkonto"] = String(value || "");
+              break;
+            case "Adress":
+              record["Adress"] = String(value || "");
+              break;
+            case "Postnr":
+              record["Postnr"] = String(value || "");
+              break;
+            case "Postort":
+              record["Postort"] = String(value || "");
+              break;
+            case "E-post":
+              record["E-post"] = String(value || "");
+              break;
+            case "Kostnadsställe":
+              record["Kostnadsställe"] = String(value || "");
+              break;
+            case "Ändringsdag":
+              record["Ändringsdag"] = value
+                ? String(value)
+                : new Date().toISOString().split("T")[0];
+              break;
+            case "Månad":
+              record["Månad"] = String(parseFloat(value) || 0);
+              break;
+            case "Timme":
+              record["Timme"] = String(parseFloat(value) || 0);
+              break;
+            case "Heldag":
+              record["Heldag"] = String(parseFloat(value) || 0);
+              break;
+            case "Annan":
+              record["Annan"] = String(value || "");
+              break;
+            case "Kommentar":
+              record["Kommentar"] = String(value || "");
+              break;
+          }
+        });
+
+        // Set default values for required fields
+        record.Aktiv = true; // New persons are always active
+        record.Befattning = record.Befattning || "";
+        record["Skattesats"] = record["Skattesats"] || 30;
+        record["Sociala Avgifter"] =
+          record["Sociala Avgifter"] !== undefined
+            ? record["Sociala Avgifter"]
+            : true;
+        record.added_to_fortnox = false;
+        record.fortnox_employee_id = "";
+
+        return record;
+      });
+
+      // Filter out records without email (required field)
+      const validRecords = personnelRecords.filter(
+        (record) => record["E-post"]
+      );
+
+      if (validRecords.length === 0) {
+        toast({
+          description: "Inga giltiga poster hittades (E-post krävs)",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Process records for add/update based on existing emails
+      const existingEmails = new Set(personnel.map((p) => p["E-post"]));
+      const recordsToAdd: Partial<PersonnelRecord>[] = [];
+      const recordsToUpdate: Partial<PersonnelRecord>[] = [];
+
+      validRecords.forEach((record) => {
+        if (existingEmails.has(record["E-post"]!)) {
+          // Find existing person and add their ID for update
+          const existingPerson = personnel.find(
+            (p) => p["E-post"] === record["E-post"]
+          );
+          if (existingPerson) {
+            record.id = existingPerson.id;
+            recordsToUpdate.push(record);
+          }
+        } else {
+          recordsToAdd.push(record);
+        }
+      });
+
+      // Process additions and updates
+      let addedCount = 0;
+      let updatedCount = 0;
+      const errors: string[] = [];
+
+      // Add new records
+      for (const record of recordsToAdd) {
+        try {
+          await addPersonnel("test_förening", record);
+          addedCount++;
+        } catch (err) {
+          errors.push(
+            `Kunde inte lägga till ${record["Förnamn"]} ${record["Efternamn"]}: ${err}`
+          );
+        }
+      }
+
+      // Update existing records
+      for (const record of recordsToUpdate) {
+        try {
+          if (record.id) {
+            await updatePersonnel("test_förening", record.id, record);
+            updatedCount++;
+          }
+        } catch (err) {
+          errors.push(
+            `Kunde inte uppdatera ${record["Förnamn"]} ${record["Efternamn"]}: ${err}`
+          );
+        }
+      }
+
+      // Show results
+      let message = "";
+      if (addedCount > 0) message += `${addedCount} personer tillagda. `;
+      if (updatedCount > 0) message += `${updatedCount} personer uppdaterade. `;
+      if (errors.length > 0) message += `${errors.length} fel uppstod.`;
+
+      toast({
+        description: message || "Inga ändringar gjordes",
+        variant: errors.length > 0 ? "destructive" : "default",
+      });
+
+      // Reload data and close viewer
+      await loadPersonnel();
+      setViewerOpen(false);
+    } catch (err) {
+      toast({
+        description: "Fel vid bearbetning av Excel-data",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
