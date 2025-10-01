@@ -90,7 +90,7 @@ export function validateClearingnr(clearingnr: string): ValidationWarning[] {
     warnings.push({
       field: "Clearingnr",
       message: "Clearingnummer ska vara 4-5 siffror",
-      severity: "warning",
+      severity: "error",
     });
   }
 
@@ -105,7 +105,7 @@ export function validateBankkonto(bankkonto: string): ValidationWarning[] {
     warnings.push({
       field: "Bankkonto",
       message: "Bankkontonummer ska vara 7-11 siffror",
-      severity: "warning",
+      severity: "error",
     });
   }
 

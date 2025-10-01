@@ -87,6 +87,15 @@ export function PersonnelSection() {
     }
   };
 
+  // Handle Excel viewer close and reset file input
+  const handleViewerClose = () => {
+    setViewerOpen(false);
+    // Reset file input to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   // Handle file upload and parse
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -302,13 +311,26 @@ export function PersonnelSection() {
 
       validRecords.forEach((record) => {
         if (existingEmails.has(record["E-post"]!)) {
-          // Find existing person and add their ID for update
+          // Find existing person and merge data, preserving fields not in Excel
           const existingPerson = personnel.find(
             (p) => p["E-post"] === record["E-post"]
           );
           if (existingPerson) {
-            record.id = existingPerson.id;
-            recordsToUpdate.push(record);
+            // Create merged record that preserves existing fields not in Excel
+            const mergedRecord: Partial<PersonnelRecord> = {
+              ...existingPerson,
+            };
+
+            // Only update fields that are present in the Excel headers
+            viewerHeaders.forEach((header) => {
+              if (record[header as keyof PersonnelRecord] !== undefined) {
+                (mergedRecord as any)[header] =
+                  record[header as keyof PersonnelRecord];
+              }
+            });
+
+            mergedRecord.id = existingPerson.id;
+            recordsToUpdate.push(mergedRecord);
           }
         } else {
           recordsToAdd.push(record);
@@ -359,7 +381,7 @@ export function PersonnelSection() {
 
       // Reload data and close viewer
       await loadPersonnel();
-      setViewerOpen(false);
+      handleViewerClose();
     } catch (err) {
       toast({
         description: "Fel vid bearbetning av Excel-data",
@@ -442,7 +464,7 @@ export function PersonnelSection() {
             headers={viewerHeaders}
             fileName={viewerFileName}
             isOpen={viewerOpen}
-            onClose={() => setViewerOpen(false)}
+            onClose={handleViewerClose}
             onSave={handleViewerSave}
           />
         )}
