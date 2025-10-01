@@ -128,11 +128,20 @@ export function PersonalInfoSection({
             placeholder="ÅÅÅÅMMDD-XXXX"
           />
           {getFieldWarnings("Personnummer").map((warning, index) => (
-            <div key={index} className="flex items-center gap-1 mt-1">
+            <div
+              key={index}
+              className="flex items-center gap-1 mt-1"
+              role="alert"
+              aria-live="polite"
+              tabIndex={-1}
+            >
               {warning.severity === "error" ? (
-                <AlertTriangle className="h-3 w-3 text-red-500" />
+                <AlertTriangle
+                  className="h-3 w-3 text-red-500"
+                  aria-hidden="true"
+                />
               ) : (
-                <Check className="h-3 w-3 text-orange-500" />
+                <Check className="h-3 w-3 text-orange-500" aria-hidden="true" />
               )}
               <span
                 className={`text-xs ${

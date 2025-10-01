@@ -8,7 +8,7 @@ import {
   normalizePersonnummer,
   type ValidationWarning,
 } from "../utils/personnelValidation";
-import { REQUIRED_FIELDS, VALIDATION_DEBOUNCE_MS } from "../constants/personnelForm";
+import { REQUIRED_FIELDS } from "../constants/personnelForm";
 import type { PersonnelRecord, PersonnelFormProps } from "../types/personnel";
 
 export function usePersonnelForm({
@@ -99,18 +99,13 @@ export function usePersonnelForm({
       });
     }
 
-    // Clear existing timeout to prevent multiple validations
+    // Clear any existing validation timeout since we're not doing real-time validation
     if (validationTimeout) {
       clearTimeout(validationTimeout);
+      setValidationTimeout(null);
     }
 
-    // Real-time validation for specific fields with debounce
-    const newTimeout = setTimeout(() => {
-      const allWarnings = validateAllFields(true); // Skip aggressive validation while typing
-      setWarnings(allWarnings);
-    }, VALIDATION_DEBOUNCE_MS);
-
-    setValidationTimeout(newTimeout);
+    // No real-time validation - only validate on blur or submit
   };
 
   const handleFieldBlur = (_key: keyof PersonnelRecord) => {
@@ -120,9 +115,13 @@ export function usePersonnelForm({
       setValidationTimeout(null);
     }
 
-    // Trigger immediate, complete validation for the specific field
-    const allWarnings = validateAllFields(false); // Don't skip validation on blur  
-    setWarnings(allWarnings);
+    // Delay validation slightly to allow tab navigation to complete first
+    const newTimeout = setTimeout(() => {
+      const allWarnings = validateAllFields(false); // Don't skip validation on blur  
+      setWarnings(allWarnings);
+    }, 50); // Short delay to allow focus transition
+
+    setValidationTimeout(newTimeout);
   };
 
   const handleSubmit = (e: React.FormEvent) => {

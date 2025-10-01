@@ -43,8 +43,17 @@ export function FinancialInfoSection({
               placeholder="1234"
             />
             {getFieldWarnings("Clearingnr").map((warning, index) => (
-              <div key={index} className="flex items-center gap-1 mt-1">
-                <AlertTriangle className="h-3 w-3 text-red-500" />
+              <div
+                key={index}
+                className="flex items-center gap-1 mt-1"
+                role="alert"
+                aria-live="polite"
+                tabIndex={-1}
+              >
+                <AlertTriangle
+                  className="h-3 w-3 text-red-500"
+                  aria-hidden="true"
+                />
                 <span className="text-xs text-red-600">{warning.message}</span>
               </div>
             ))}
@@ -62,8 +71,17 @@ export function FinancialInfoSection({
               placeholder="1234567890"
             />
             {getFieldWarnings("Bankkonto").map((warning, index) => (
-              <div key={index} className="flex items-center gap-1 mt-1">
-                <AlertTriangle className="h-3 w-3 text-orange-500" />
+              <div
+                key={index}
+                className="flex items-center gap-1 mt-1"
+                role="alert"
+                aria-live="polite"
+                tabIndex={-1}
+              >
+                <AlertTriangle
+                  className="h-3 w-3 text-orange-500"
+                  aria-hidden="true"
+                />
                 <span className="text-xs text-orange-600">
                   {warning.message}
                 </span>
@@ -81,12 +99,16 @@ export function FinancialInfoSection({
             <Input
               type="number"
               step="0.1"
-              value={formData["Skattesats"] || ""}
+              value={
+                formData["Skattesats"] !== undefined &&
+                formData["Skattesats"] !== null
+                  ? formData["Skattesats"]
+                  : 30
+              }
               onChange={(e) =>
                 onInputChange("Skattesats", parseFloat(e.target.value) || 0)
               }
               onBlur={() => onFieldBlur("Skattesats")}
-              placeholder="30.0"
             />
           </div>
 
@@ -123,8 +145,17 @@ export function FinancialInfoSection({
             onBlur={() => onFieldBlur("Ändringsdag")}
           />
           {getFieldWarnings("Ändringsdag").map((warning, index) => (
-            <div key={index} className="flex items-center gap-1 mt-1">
-              <AlertTriangle className="h-3 w-3 text-red-500" />
+            <div
+              key={index}
+              className="flex items-center gap-1 mt-1"
+              role="alert"
+              aria-live="polite"
+              tabIndex={-1}
+            >
+              <AlertTriangle
+                className="h-3 w-3 text-red-500"
+                aria-hidden="true"
+              />
               <span className="text-xs text-red-600">{warning.message}</span>
             </div>
           ))}
