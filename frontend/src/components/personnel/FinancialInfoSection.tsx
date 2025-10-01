@@ -10,12 +10,14 @@ interface FinancialInfoSectionProps {
     key: keyof PersonnelRecord,
     value: string | boolean | number
   ) => void;
+  onFieldBlur: (key: keyof PersonnelRecord) => void;
 }
 
 export function FinancialInfoSection({
   formData,
   getFieldWarnings,
   onInputChange,
+  onFieldBlur,
 }: FinancialInfoSectionProps) {
   return (
     <div className="bg-primary border rounded-lg p-4">
@@ -37,6 +39,7 @@ export function FinancialInfoSection({
               type="text"
               value={formData.Clearingnr || ""}
               onChange={(e) => onInputChange("Clearingnr", e.target.value)}
+              onBlur={() => onFieldBlur("Clearingnr")}
               placeholder="1234"
             />
             {getFieldWarnings("Clearingnr").map((warning, index) => (
@@ -55,6 +58,7 @@ export function FinancialInfoSection({
               type="text"
               value={formData.Bankkonto || ""}
               onChange={(e) => onInputChange("Bankkonto", e.target.value)}
+              onBlur={() => onFieldBlur("Bankkonto")}
               placeholder="1234567890"
             />
             {getFieldWarnings("Bankkonto").map((warning, index) => (
@@ -81,6 +85,7 @@ export function FinancialInfoSection({
               onChange={(e) =>
                 onInputChange("Skattesats", parseFloat(e.target.value) || 0)
               }
+              onBlur={() => onFieldBlur("Skattesats")}
               placeholder="30.0"
             />
           </div>
@@ -96,6 +101,7 @@ export function FinancialInfoSection({
                 onChange={(e) =>
                   onInputChange("Sociala Avgifter", e.target.checked)
                 }
+                onBlur={() => onFieldBlur("Sociala Avgifter")}
                 className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
               />
               <span className="text-sm text-muted-foreground">
@@ -114,6 +120,7 @@ export function FinancialInfoSection({
             type="date"
             value={formData.Ändringsdag || ""}
             onChange={(e) => onInputChange("Ändringsdag", e.target.value)}
+            onBlur={() => onFieldBlur("Ändringsdag")}
           />
           {getFieldWarnings("Ändringsdag").map((warning, index) => (
             <div key={index} className="flex items-center gap-1 mt-1">
@@ -134,6 +141,7 @@ export function FinancialInfoSection({
               step="100"
               value={formData.Månad || ""}
               onChange={(e) => onInputChange("Månad", e.target.value)}
+              onBlur={() => onFieldBlur("Månad")}
               placeholder="25000"
             />
           </div>
@@ -147,6 +155,7 @@ export function FinancialInfoSection({
               step="10"
               value={formData.Timme || ""}
               onChange={(e) => onInputChange("Timme", e.target.value)}
+              onBlur={() => onFieldBlur("Timme")}
               placeholder="150"
             />
           </div>
@@ -160,6 +169,7 @@ export function FinancialInfoSection({
               step="100"
               value={formData.Heldag || ""}
               onChange={(e) => onInputChange("Heldag", e.target.value)}
+              onBlur={() => onFieldBlur("Heldag")}
               placeholder="1200"
             />
           </div>
@@ -174,6 +184,7 @@ export function FinancialInfoSection({
             type="text"
             value={formData.Kommentar || ""}
             onChange={(e) => onInputChange("Kommentar", e.target.value)}
+            onBlur={() => onFieldBlur("Kommentar")}
             placeholder="Övriga anteckningar..."
           />
         </div>

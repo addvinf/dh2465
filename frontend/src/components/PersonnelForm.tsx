@@ -61,6 +61,7 @@ export function PersonnelForm({
               formData={formData}
               getFieldWarnings={getFieldWarnings}
               onInputChange={handleInputChange}
+              onFieldBlur={handleFieldBlur}
             />
 
             <ValidationWarnings warnings={warnings} />

@@ -91,9 +91,12 @@ export function usePersonnelForm({
   ) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
 
-    // Clear error when user starts typing
+    // Clear error for the specific field when user starts typing
     if (errors[String(key)]) {
-      setErrors((prev) => ({ ...prev, [String(key)]: "" }));
+      setErrors((prev) => {
+        const { [String(key)]: _, ...rest } = prev;
+        return rest;
+      });
     }
 
     // Clear existing timeout to prevent multiple validations
@@ -118,7 +121,7 @@ export function usePersonnelForm({
     }
 
     // Trigger immediate, complete validation for the specific field
-    const allWarnings = validateAllFields(false); // Don't skip validation on blur
+    const allWarnings = validateAllFields(false); // Don't skip validation on blur  
     setWarnings(allWarnings);
   };
 
