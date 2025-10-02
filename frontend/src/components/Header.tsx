@@ -102,6 +102,19 @@ export function Header() {
                     </div>
                     <ChevronRight className="h-4 w-4 ml-2 text-muted-foreground" />
                   </Link>
+                  <Link
+                    to="/settings"
+                    className="flex items-center justify-between px-4 py-2 text-foreground hover:bg-accent rounded transition-colors"
+                    onClick={() => setNavOpen(false)}
+                  >
+                    <div className="flex flex-col text-left">
+                      <span>Inställningar</span>
+                      <span className="text-xs text-muted-foreground">
+                        Konfigurera system och organisation
+                      </span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 ml-2 text-muted-foreground" />
+                  </Link>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -158,13 +171,11 @@ export function Header() {
                 <User className="mr-2 h-4 w-4" />
                 <span>Profil</span>
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  alert("Inställningar-funktionen kommer att utvecklas senare")
-                }
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Inställningar</span>
+              <DropdownMenuItem asChild>
+                <Link to="/settings" className="flex items-center">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Inställningar</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
