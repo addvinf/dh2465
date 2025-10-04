@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { Button } from "../ui/Button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Switch } from "../ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../../ui/Button";
+import { Input } from "../../ui/input";
+import { Label } from "../../ui/label";
+import { Switch } from "../../ui/switch";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { Calculator, Save } from "lucide-react";
-import { useSettings } from "../../contexts/SettingsContext";
-import { useToast } from "../ui/use-toast";
+import { useSettings } from "../../../contexts/SettingsContext";
+import { useToast } from "../../ui/use-toast";
 
 export function EmployerFeesCard() {
   const { settings, updateEmployerFees } = useSettings();
@@ -45,40 +45,6 @@ export function EmployerFeesCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="standard-fee">Ordinarie avgift (%)</Label>
-            <Input
-              id="standard-fee"
-              type="number"
-              step="0.01"
-              value={localEmployerFees.standardFee}
-              onChange={(e) =>
-                setLocalEmployerFees({
-                  ...localEmployerFees,
-                  standardFee: parseFloat(e.target.value) || 0,
-                })
-              }
-            />
-          </div>
-          <div>
-            <Label htmlFor="reduced-fee">
-              Reducerad avgift under 19 år (%)
-            </Label>
-            <Input
-              id="reduced-fee"
-              type="number"
-              step="0.01"
-              value={localEmployerFees.reducedFee}
-              onChange={(e) =>
-                setLocalEmployerFees({
-                  ...localEmployerFees,
-                  reducedFee: parseFloat(e.target.value) || 0,
-                })
-              }
-            />
-          </div>
-        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="base-amount">Halvt basbelopp 2025 (kr)</Label>

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { Button } from "../ui/Button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Switch } from "../ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../../ui/Button";
+import { Input } from "../../ui/input";
+import { Label } from "../../ui/label";
+import { Switch } from "../../ui/switch";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { Settings, Save, Upload } from "lucide-react";
-import { useSettings } from "../../contexts/SettingsContext";
-import { useToast } from "../../hooks/use-toast";
+import { useSettings } from "../../../contexts/SettingsContext";
+import { useToast } from "../../../hooks/use-toast";
 
 export function IntegrationTab() {
   const { settings, updateIntegrations } = useSettings();

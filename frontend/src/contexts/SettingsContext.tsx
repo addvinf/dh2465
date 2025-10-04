@@ -16,9 +16,6 @@ import { settingsService } from "../services/settingsService";
 // Default settings
 const defaultSettings: Settings = {
   employerFees: {
-    standardFee: 31.42,
-    reducedFee: 15.49,
-    pensionerFee: 10.21,
     baseAmount: 29400,
     standardTax: 30,
     vacationPayEnabled: true,
@@ -28,19 +25,22 @@ const defaultSettings: Settings = {
   ageBasedFees: [
     {
       id: "1",
-      ageGroup: "Under 19 år",
+      lowerBound: 0,
+      upperBound: 18,
       feeRate: 15.49,
-      description: "Reducerad avgift",
+      description: "Reducerad avgift för unga",
     },
     {
       id: "2",
-      ageGroup: "19-65 år",
+      lowerBound: 19,
+      upperBound: 64,
       feeRate: 31.42,
       description: "Ordinarie avgift",
     },
     {
       id: "3",
-      ageGroup: "Över 65 år",
+      lowerBound: 65,
+      upperBound: null,
       feeRate: 10.21,
       description: "Pensionärsavgift",
     },
@@ -400,88 +400,158 @@ export function SettingsProvider({
   };
 
   const updateEmployerFees = async (fees: Partial<EmployerFees>) => {
+    const newSettings = {
+      ...state.settings,
+      employerFees: { ...state.settings.employerFees, ...fees },
+    };
     dispatch({ type: "UPDATE_EMPLOYER_FEES", payload: fees });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const updateOrganization = async (org: Partial<Organization>) => {
+    const newSettings = {
+      ...state.settings,
+      organization: { ...state.settings.organization, ...org },
+    };
     dispatch({ type: "UPDATE_ORGANIZATION", payload: org });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const updateIntegrations = async (integrations: Partial<Integrations>) => {
+    const newSettings = {
+      ...state.settings,
+      integrations: { ...state.settings.integrations, ...integrations },
+    };
     dispatch({ type: "UPDATE_INTEGRATIONS", payload: integrations });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const addAccount = async (account: Omit<Account, "id">) => {
     const newAccount = { ...account, id: Date.now().toString() };
+    const newSettings = {
+      ...state.settings,
+      accounts: [...state.settings.accounts, newAccount],
+    };
     dispatch({ type: "ADD_ACCOUNT", payload: newAccount });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const updateAccount = async (id: string, account: Partial<Account>) => {
+    const newSettings = {
+      ...state.settings,
+      accounts: state.settings.accounts.map((acc) =>
+        acc.id === id ? { ...acc, ...account } : acc
+      ),
+    };
     dispatch({ type: "UPDATE_ACCOUNT", payload: { id, account } });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const deleteAccount = async (id: string) => {
+    const newSettings = {
+      ...state.settings,
+      accounts: state.settings.accounts.filter((acc) => acc.id !== id),
+    };
     dispatch({ type: "DELETE_ACCOUNT", payload: id });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const addCostCenter = async (costCenter: Omit<CostCenter, "id">) => {
     const newCostCenter = { ...costCenter, id: Date.now().toString() };
+    const newSettings = {
+      ...state.settings,
+      costCenters: [...state.settings.costCenters, newCostCenter],
+    };
     dispatch({ type: "ADD_COST_CENTER", payload: newCostCenter });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const updateCostCenter = async (
     id: string,
     costCenter: Partial<CostCenter>
   ) => {
+    const newSettings = {
+      ...state.settings,
+      costCenters: state.settings.costCenters.map((center) =>
+        center.id === id ? { ...center, ...costCenter } : center
+      ),
+    };
     dispatch({ type: "UPDATE_COST_CENTER", payload: { id, costCenter } });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const deleteCostCenter = async (id: string) => {
+    const newSettings = {
+      ...state.settings,
+      costCenters: state.settings.costCenters.filter(
+        (center) => center.id !== id
+      ),
+    };
     dispatch({ type: "DELETE_COST_CENTER", payload: id });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const addSalaryType = async (salaryType: Omit<SalaryType, "id">) => {
     const newSalaryType = { ...salaryType, id: Date.now().toString() };
+    const newSettings = {
+      ...state.settings,
+      salaryTypes: [...state.settings.salaryTypes, newSalaryType],
+    };
     dispatch({ type: "ADD_SALARY_TYPE", payload: newSalaryType });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const updateSalaryType = async (
     id: string,
     salaryType: Partial<SalaryType>
   ) => {
+    const newSettings = {
+      ...state.settings,
+      salaryTypes: state.settings.salaryTypes.map((type) =>
+        type.id === id ? { ...type, ...salaryType } : type
+      ),
+    };
     dispatch({ type: "UPDATE_SALARY_TYPE", payload: { id, salaryType } });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const deleteSalaryType = async (id: string) => {
+    const newSettings = {
+      ...state.settings,
+      salaryTypes: state.settings.salaryTypes.filter((type) => type.id !== id),
+    };
     dispatch({ type: "DELETE_SALARY_TYPE", payload: id });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const addAgeBasedFee = async (fee: Omit<AgeBasedFee, "id">) => {
     const newFee = { ...fee, id: Date.now().toString() };
+    const newSettings = {
+      ...state.settings,
+      ageBasedFees: [...state.settings.ageBasedFees, newFee],
+    };
     dispatch({ type: "ADD_AGE_BASED_FEE", payload: newFee });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const updateAgeBasedFee = async (id: string, fee: Partial<AgeBasedFee>) => {
+    const newSettings = {
+      ...state.settings,
+      ageBasedFees: state.settings.ageBasedFees.map((existingFee) =>
+        existingFee.id === id ? { ...existingFee, ...fee } : existingFee
+      ),
+    };
     dispatch({ type: "UPDATE_AGE_BASED_FEE", payload: { id, fee } });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const deleteAgeBasedFee = async (id: string) => {
+    const newSettings = {
+      ...state.settings,
+      ageBasedFees: state.settings.ageBasedFees.filter((fee) => fee.id !== id),
+    };
     dispatch({ type: "DELETE_AGE_BASED_FEE", payload: id });
-    await saveSettings(state.settings);
+    await saveSettings(newSettings);
   };
 
   const value: SettingsContextType = {

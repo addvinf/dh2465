@@ -42,9 +42,6 @@ export const settingsService = {
   createDefaultSettings(organizationName: string): Settings {
     return {
       employerFees: {
-        standardFee: 31.42,
-        reducedFee: 10.21,
-        pensionerFee: 10.21,
         baseAmount: 29750,
         standardTax: 30.0,
         vacationPayEnabled: true,
@@ -74,19 +71,22 @@ export const settingsService = {
       ageBasedFees: [
         {
           id: "1",
-          ageGroup: "Under 19 år",
+          lowerBound: 0,
+          upperBound: 18,
           feeRate: 10.21,
           description: "Reducerad arbetsgivaravgift för unga"
         },
         {
           id: "2", 
-          ageGroup: "19-64 år",
+          lowerBound: 19,
+          upperBound: 64,
           feeRate: 31.42,
           description: "Ordinarie arbetsgivaravgift"
         },
         {
           id: "3",
-          ageGroup: "65+ år", 
+          lowerBound: 65,
+          upperBound: null,
           feeRate: 10.21,
           description: "Reducerad arbetsgivaravgift för seniorer"
         }

@@ -1,8 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { GeneralTab } from "./GeneralTab.js";
-import { OrganizationTab } from "./OrganizationTab.js";
-import { SalaryTypesTab } from "./SalaryTypesTab.js";
-import { IntegrationTab } from "./IntegrationTab.js";
+import { GeneralTab } from "./general/GeneralTab.js";
+import { OrganizationTab } from "./organisation/OrganizationTab.js";
+import { SalaryTypesTab } from "./salary_types/SalaryTypesTab.js";
+import { IntegrationTab } from "./integration/IntegrationTab.js";
 
 export function SettingsTabs() {
   return (

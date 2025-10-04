@@ -1,8 +1,5 @@
 // Settings types and interfaces
 export interface EmployerFees {
-  standardFee: number;
-  reducedFee: number;
-  pensionerFee: number;
   baseAmount: number;
   standardTax: number;
   vacationPayEnabled: boolean;
@@ -12,7 +9,8 @@ export interface EmployerFees {
 
 export interface AgeBasedFee {
   id: string;
-  ageGroup: string;
+  lowerBound: number;
+  upperBound: number | null; // null for no upper limit (e.g., 65+)
   feeRate: number;
   description: string;
 }

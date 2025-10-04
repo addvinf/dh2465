@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button } from "../ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Input } from "../ui/input";
+import { Button } from "../../ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import { Input } from "../../ui/input";
 import {
   Table,
   TableBody,
@@ -9,25 +9,25 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
+} from "../../ui/table";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
+} from "../../ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "../../ui/select";
 import { Plus, Edit3, Trash2, Save, X } from "lucide-react";
-import { useSettings } from "../../contexts/SettingsContext";
-import type { SalaryType } from "../../types/settings";
-import { useToast } from "../../hooks/use-toast";
+import { useSettings } from "../../../contexts/SettingsContext";
+import type { SalaryType } from "../../../types/settings";
+import { useToast } from "../../../hooks/use-toast";
 
 interface EditableRowProps {
   salaryType: SalaryType;

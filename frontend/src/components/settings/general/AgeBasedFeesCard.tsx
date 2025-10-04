@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button } from "../ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Input } from "../ui/input";
+import { Button } from "../../ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import { Input } from "../../ui/input";
 import {
   Table,
   TableBody,
@@ -9,18 +9,19 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
+} from "../../ui/table";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
-import { Edit3, Plus, Trash2, Save, X } from "lucide-react";
-import { useSettings } from "../../contexts/SettingsContext";
-import type { AgeBasedFee } from "../../types/settings";
-import { useToast } from "../../hooks/use-toast";
+} from "../../ui/dialog";
+import { Edit3, Plus, Trash2, Save, X, AlertTriangle } from "lucide-react";
+import { useSettings } from "../../../contexts/SettingsContext";
+import type { AgeBasedFee } from "../../../types/settings";
+import { useToast } from "../../../hooks/use-toast";
+import { validateAgeBasedFees } from "../../../utils/ageBasedFeeUtils";
 
 interface EditableRowProps {
   fee: AgeBasedFee;
@@ -32,7 +33,13 @@ function EditableRow({ fee, onSave, onCancel }: EditableRowProps) {
   const [editedFee, setEditedFee] = useState(fee);
 
   const handleSave = () => {
-    if (!editedFee.ageGroup.trim() || editedFee.feeRate <= 0) {
+    if (editedFee.lowerBound < 0 || editedFee.feeRate <= 0) {
+      return;
+    }
+    if (
+      editedFee.upperBound !== null &&
+      editedFee.upperBound <= editedFee.lowerBound
+    ) {
       return;
     }
     onSave(editedFee);
@@ -42,19 +49,40 @@ function EditableRow({ fee, onSave, onCancel }: EditableRowProps) {
     <TableRow>
       <TableCell>
         <Input
-          value={editedFee.ageGroup}
+          type="number"
+          value={editedFee.lowerBound || ""}
           onChange={(e) =>
-            setEditedFee({ ...editedFee, ageGroup: e.target.value })
+            setEditedFee({
+              ...editedFee,
+              lowerBound: parseInt(e.target.value) || 0,
+            })
           }
-          placeholder="t.ex. 18-25 år"
-          className="h-8"
+          min="0"
+          max="120"
+          className="h-8 w-20"
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          value={editedFee.upperBound || ""}
+          onChange={(e) =>
+            setEditedFee({
+              ...editedFee,
+              upperBound: e.target.value ? parseInt(e.target.value) : null,
+            })
+          }
+          min={String(Math.max(0, (editedFee.lowerBound || 0) + 1))}
+          max="120"
+          placeholder="Ingen gräns"
+          className="h-8 w-20"
         />
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-1">
           <Input
             type="number"
-            value={editedFee.feeRate}
+            value={editedFee.feeRate || ""}
             onChange={(e) =>
               setEditedFee({
                 ...editedFee,
@@ -100,17 +128,21 @@ interface AddFeeDialogProps {
 function AddFeeDialog({ onAdd }: AddFeeDialogProps) {
   const [open, setOpen] = useState(false);
   const [newFee, setNewFee] = useState({
-    ageGroup: "",
+    lowerBound: 0,
+    upperBound: null as number | null,
     feeRate: 0,
     description: "",
   });
 
   const handleAdd = () => {
-    if (!newFee.ageGroup.trim() || newFee.feeRate <= 0) {
+    if (newFee.lowerBound < 0 || newFee.feeRate <= 0) {
+      return;
+    }
+    if (newFee.upperBound !== null && newFee.upperBound <= newFee.lowerBound) {
       return;
     }
     onAdd(newFee);
-    setNewFee({ ageGroup: "", feeRate: 0, description: "" });
+    setNewFee({ lowerBound: 0, upperBound: null, feeRate: 0, description: "" });
     setOpen(false);
   };
 
@@ -128,20 +160,43 @@ function AddFeeDialog({ onAdd }: AddFeeDialogProps) {
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium">Åldersgrupp</label>
+            <label className="text-sm font-medium">Lägsta ålder</label>
             <Input
-              value={newFee.ageGroup}
+              type="number"
+              value={newFee.lowerBound || ""}
               onChange={(e) =>
-                setNewFee({ ...newFee, ageGroup: e.target.value })
+                setNewFee({
+                  ...newFee,
+                  lowerBound: parseInt(e.target.value) || 0,
+                })
               }
-              placeholder="t.ex. 18-25 år"
+              min="0"
+              max="120"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">
+              Högsta ålder (lämna tom för ingen gräns)
+            </label>
+            <Input
+              type="number"
+              value={newFee.upperBound || ""}
+              onChange={(e) =>
+                setNewFee({
+                  ...newFee,
+                  upperBound: e.target.value ? parseInt(e.target.value) : null,
+                })
+              }
+              min={String(Math.max(0, (newFee.lowerBound || 0) + 1))}
+              max="120"
+              placeholder="Ingen gräns"
             />
           </div>
           <div>
             <label className="text-sm font-medium">Arbetsgivaravgift (%)</label>
             <Input
               type="number"
-              value={newFee.feeRate}
+              value={newFee.feeRate || ""}
               onChange={(e) =>
                 setNewFee({
                   ...newFee,
@@ -181,6 +236,9 @@ export function AgeBasedFeesCard() {
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Validate the current age-based fees
+  const validation = validateAgeBasedFees(settings.ageBasedFees);
+
   const handleEdit = (id: string) => {
     setEditingId(id);
   };
@@ -188,7 +246,8 @@ export function AgeBasedFeesCard() {
   const handleSave = async (fee: AgeBasedFee) => {
     try {
       await updateAgeBasedFee(fee.id, {
-        ageGroup: fee.ageGroup,
+        lowerBound: fee.lowerBound,
+        upperBound: fee.upperBound,
         feeRate: fee.feeRate,
         description: fee.description,
       });
@@ -211,6 +270,19 @@ export function AgeBasedFeesCard() {
   };
 
   const handleAdd = async (newFee: Omit<AgeBasedFee, "id">) => {
+    // Validate the new fee before adding
+    const tempFees = [...settings.ageBasedFees, { ...newFee, id: "temp" }];
+    const validation = validateAgeBasedFees(tempFees);
+
+    if (!validation.isValid) {
+      toast({
+        title: "Valideringsfel",
+        description: validation.errors[0] || "Ogiltig avgiftskonfiguration",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await addAgeBasedFee(newFee);
       toast({
@@ -248,15 +320,40 @@ export function AgeBasedFeesCard() {
     <Card className="financial-card">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg text-foreground">
-          Åldersbaserade avgifter
+          Åldersbaserade arbetsgivaravgifter
         </CardTitle>
         <AddFeeDialog onAdd={handleAdd} />
       </CardHeader>
       <CardContent>
+        {/* Validation warnings */}
+        {(!validation.isValid || validation.warnings.length > 0) && (
+          <div className="mb-4 space-y-2">
+            {validation.errors.map((error, index) => (
+              <div
+                key={`error-${index}`}
+                className="flex items-center gap-2 text-sm text-destructive"
+              >
+                <AlertTriangle className="h-4 w-4" />
+                {error}
+              </div>
+            ))}
+            {validation.warnings.map((warning, index) => (
+              <div
+                key={`warning-${index}`}
+                className="flex items-center gap-2 text-sm text-yellow-600"
+              >
+                <AlertTriangle className="h-4 w-4" />
+                {warning}
+              </div>
+            ))}
+          </div>
+        )}
+
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Åldersgrupp</TableHead>
+              <TableHead>Från ålder</TableHead>
+              <TableHead>Till ålder</TableHead>
               <TableHead>Arbetsgivaravgift</TableHead>
               <TableHead>Beskrivning</TableHead>
               <TableHead>Åtgärder</TableHead>
@@ -273,7 +370,8 @@ export function AgeBasedFeesCard() {
                 />
               ) : (
                 <TableRow key={fee.id}>
-                  <TableCell>{fee.ageGroup}</TableCell>
+                  <TableCell>{fee.lowerBound}</TableCell>
+                  <TableCell>{fee.upperBound ?? "Ingen gräns"}</TableCell>
                   <TableCell>{fee.feeRate}%</TableCell>
                   <TableCell>{fee.description}</TableCell>
                   <TableCell>
