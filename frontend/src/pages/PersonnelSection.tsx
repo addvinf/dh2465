@@ -8,6 +8,9 @@ import {
 } from "../services/personnelService";
 import { Plus, Upload, RefreshCw } from "lucide-react";
 import { Header } from "../components/Header";
+import FortnoxPushButton from "../components/FortnoxPushButton";
+import FortnoxBatchErrors from "../components/FortnoxBatchErrors";
+// Fortnox auth status handled by FortnoxPushButton
 import { useRef, useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { ExcelViewer } from "../components/ExcelViewer";
@@ -27,6 +30,8 @@ export function PersonnelSection() {
     PersonnelRecord | undefined
   >();
   const [formLoading, setFormLoading] = useState(false);
+  const [batchErrors, setBatchErrors] = useState<any[]>([]);
+  // Fortnox auth status now handled inside FortnoxPushButton
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [viewerData, setViewerData] = useState<any[][]>([]);
@@ -85,6 +90,12 @@ export function PersonnelSection() {
     } finally {
       setFormLoading(false);
     }
+  };
+
+  const handlePushComplete = async (result: { failures: number; successes: number; items: any[] }) => {
+    const errors = (result.items || []).filter((i) => i.error);
+    setBatchErrors(errors);
+    await loadPersonnel();
   };
 
   // Handle Excel viewer close and reset file input
@@ -432,6 +443,7 @@ export function PersonnelSection() {
               <Plus className="mr-2 h-4 w-4" />
               Lägg till person
             </Button>
+            <FortnoxPushButton className="mr-2" onComplete={handlePushComplete} />
           </div>
         </div>
 
@@ -447,6 +459,8 @@ export function PersonnelSection() {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
         />
+
+        <FortnoxBatchErrors errors={batchErrors} />
 
         {/* Personnel Form Dialog */}
         <PersonnelForm
