@@ -1,0 +1,12 @@
+,,,,,,,,,,,,Tränarersättning,,,,
+Upplagd av,Personnummer,Förnamn,Efternamn,Clearingnr,Bankkonto,Adress,Postnr,Postort,E-post,Kostnadsställe,Ändringsdag,Månad,Timme,Heldag,Annan,Kommentar
+Admin,19990101-1234,Anna,Bergström,8123,1234567890,Storgatan 12,11122,Stockholm,anna.bergstrom@mail.com,101,2025-09-01,5000,120,800,,Ny medlem
+Admin,19880512-5678,Erik,Lundqvist,7420,9876543210,Skogsvägen 45,41103,Göteborg,erik.lundqvist@mail.com,102,2025-09-02,4500,80,300,,Tränare
+Admin,20010315-2345,Sofia,Nilsson,8304,5678901234,Ekvägen 7,22344,Malmö,sofia.nilsson@mail.com,103,2025-09-03,3000,60,500,1,Student
+Admin,19951230-6789,Johan,Pettersson,8945,3456789012,Havsgatan 3,87120,Sundsvall,johan.pettersson@mail.com,104,2025-09-04,5200,100,1000,,Aktiv medlem
+Admin,19970708-4321,Lisa,Andersson,7512,8901234567,Ängsvägen 19,92133,Umeå,lisa.andersson@mail.com,105,2025-09-05,2800,40,,,Ny i föreningen
+Admin,19830625-3456,Daniel,Karlsson,8032,2345678901,Bergvägen 56,54122,Skövde,daniel.karlsson@mail.com,106,2025-09-06,6000,150,1200,,Ledare
+Admin,19940318-9876,Maria,Holm,7890,6789012345,Parkgatan 88,33322,Västerås,maria.holm@mail.com,107,2025-09-07,4000,75,600,,
+Admin,20021109-8765,Oscar,Svensson,7201,9012345678,Industrigatan 14,60145,Norrköping,oscar.svensson@mail.com,108,2025-09-08,2600,35,,2,Unga ledare
+Admin,19981122-6543,Clara,Eriksson,8340,4567890123,Lärkgatan 22,75109,Uppsala,clara.eriksson@mail.com,109,2025-09-09,3100,50,2000,,Extra insats
+Admin,19890205-1357,Henrik,Dahl,7456,7890123456,Kyrkogatan 101,43120,Borås,henrik.dahl@mail.com,110,2025-09-10,5500,110,1500,,Styrelse

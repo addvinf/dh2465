@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import crypto from 'node:crypto';
-import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const router = Router();
@@ -14,39 +13,23 @@ function getConfig() {
   return { clientId, clientSecret, redirectUri, scopes, accountType };
 }
 
-function getAppStore(req) {
-  if (!req.app.locals.fortnoxAuth) {
-    req.app.locals.fortnoxAuth = {
-      tokens: null, // { accessToken, refreshToken, expiresAt }
-      states: new Set(),
+function getSessionStore(req) {
+  if (!req.session) {
+    throw new Error('Session middleware not configured');
+  }
+  if (!req.session.fortnoxAuth) {
+    req.session.fortnoxAuth = {
+      tokens: null,
     };
   }
-  return req.app.locals.fortnoxAuth;
+  return req.session.fortnoxAuth;
 }
 
-function getTokenFilePath() {
-  const dir = path.dirname(new URL(import.meta.url).pathname);
-  return path.resolve(dir, '..', '.fortnox_tokens.json');
-}
-
-async function readTokensFromDisk() {
-  try {
-    const filePath = getTokenFilePath();
-    const data = await fs.readFile(filePath, 'utf8');
-    const json = JSON.parse(data);
-    if (json && typeof json === 'object' && json.accessToken && json.refreshToken && json.expiresAt) {
-      return { accessToken: json.accessToken, refreshToken: json.refreshToken, expiresAt: json.expiresAt };
-    }
-  } catch (_) {}
-  return null;
-}
-
-async function writeTokensToDisk(tokens) {
-  try {
-    const filePath = getTokenFilePath();
-    const json = JSON.stringify(tokens, null, 2);
-    await fs.writeFile(filePath, json, 'utf8');
-  } catch (_) {}
+function getGlobalStates() {
+  if (!global.fortnoxStates) {
+    global.fortnoxStates = new Set();
+  }
+  return global.fortnoxStates;
 }
 
 function buildAuthorizeUrl({ clientId, redirectUri, scopes, state, accountType }) {
@@ -155,8 +138,8 @@ router.get('/login', (req, res) => {
   const chosenAccountType = (req.query && typeof req.query.accountType === 'string' && req.query.accountType.trim()) || accountType;
   const state = crypto.randomBytes(16).toString('hex');
   const url = buildAuthorizeUrl({ clientId, redirectUri, scopes, state, accountType: chosenAccountType });
-  const store = getAppStore(req);
-  store.states.add(state);
+  const states = getGlobalStates();
+  states.add(state);
   res.redirect(url);
 });
 
@@ -168,8 +151,7 @@ router.get('/callback', async (req, res) => {
   const state = req.query && req.query.state;
   const oauthError = req.query && (req.query.error || req.query.error_description);
   console.log("oauthError: ", oauthError);
-  const store = getAppStore(req);
-  console.log("store: ", store);
+  const states = getGlobalStates();
 
   // Frontend redirect URL
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -181,16 +163,16 @@ router.get('/callback', async (req, res) => {
   if (!code) {
     return res.redirect(`${frontendUrl}/?auth=error&message=${encodeURIComponent('Missing authorization code')}`);
   }
-  if (!state || !store.states.has(state)) {
+  if (!state || !states.has(state)) {
     return res.redirect(`${frontendUrl}/?auth=error&message=${encodeURIComponent('Invalid state parameter')}`);
   }
-  store.states.delete(state);
+  states.delete(state);
 
   try {
     console.log("we get to the try exchangeCodeForTokens");
     const tokens = await exchangeCodeForTokens(code, redirectUri);
+    const store = getSessionStore(req);
     store.tokens = { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, expiresAt: tokens.expiresAt };
-    await writeTokensToDisk(store.tokens);
     // Redirect to frontend with success
     res.redirect(`${frontendUrl}/?auth=success`);
   } catch (e) {
@@ -201,7 +183,7 @@ router.get('/callback', async (req, res) => {
 });
 
 router.post('/refresh', async (req, res) => {
-  const store = getAppStore(req);
+  const store = getSessionStore(req);
   const current = store.tokens;
   if (!current || !current.refreshToken) {
     return res.status(400).json({ error: 'No refresh token available. Authorize first.' });
@@ -209,7 +191,6 @@ router.post('/refresh', async (req, res) => {
   try {
     const tokens = await refreshAccessToken(current.refreshToken);
     store.tokens = { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, expiresAt: tokens.expiresAt };
-    await writeTokensToDisk(store.tokens);
     res.json({ refreshed: true, expiresAt: tokens.expiresAt });
   } catch (e) {
     res.status(e.status || 500).json({ error: e.message, details: e.response });
@@ -217,7 +198,7 @@ router.post('/refresh', async (req, res) => {
 });
 
 router.get('/status', (req, res) => {
-  const store = getAppStore(req);
+  const store = getSessionStore(req);
   const tokens = store.tokens;
   const now = Date.now();
   const hasAccess = Boolean(tokens && tokens.accessToken);
@@ -228,37 +209,38 @@ router.get('/status', (req, res) => {
 
 export default router;
 
-export async function initFortnoxAuth(app) {
-  const existing = await readTokensFromDisk();
-  if (existing) {
-    app.locals.fortnoxAuth = app.locals.fortnoxAuth || { states: new Set() };
-    app.locals.fortnoxAuth.tokens = existing;
-  }
-}
-
-export async function getOrRefreshAccessTokenFromApp(app) {
-  if (!app || !app.locals) return null;
-  const auth = app.locals.fortnoxAuth;
-  if (!auth || !auth.tokens) return null;
+export async function getOrRefreshAccessTokenFromSession(req) {
+  if (!req || !req.session) return null;
+  const store = getSessionStore(req);
+  if (!store || !store.tokens) return null;
   const now = Date.now();
-  const t = auth.tokens;
+  const t = store.tokens;
   if (t.expiresAt && t.expiresAt > now && t.accessToken) {
     return t.accessToken;
   }
   if (!t.refreshToken) return null;
   try {
     const refreshed = await refreshAccessToken(t.refreshToken);
-    app.locals.fortnoxAuth = app.locals.fortnoxAuth || {};
-    app.locals.fortnoxAuth.tokens = {
+    store.tokens = {
       accessToken: refreshed.accessToken,
       refreshToken: refreshed.refreshToken,
       expiresAt: refreshed.expiresAt,
     };
-    await writeTokensToDisk(app.locals.fortnoxAuth.tokens);
     return refreshed.accessToken || null;
   } catch (_) {
     return null;
   }
 }
+
+router.post('/logout', (req, res) => {
+  try {
+    if (req.session && req.session.fortnoxAuth) {
+      delete req.session.fortnoxAuth;
+    }
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 

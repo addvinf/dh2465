@@ -1,4 +1,3 @@
-
 import path from "node:path";
 import dotenv from "dotenv";
 import express from "express";
@@ -6,9 +5,11 @@ import { createSupabaseClientFromEnv } from "./supabase.js";
 import helloWorldRouter from "./routers/helloWorld.js";
 import supabaseExampleRouter from "./routers/supabaseExample.js";
 import orgDataRouter from "./routers/orgData.js";
-import fortnoxEmployeesRouter from './routers/fortnoxEmployees.js';
-import fortnoxAuthRouter, { initFortnoxAuth } from './routers/fortnoxAuth.js';
+import settingsRouter from "./routers/settings.js";
+import fortnoxEmployeesRouter from "./routers/fortnoxEmployees.js";
+import fortnoxAuthRouter from "./routers/fortnoxAuth.js";
 import cors from "cors";
+import session from 'express-session';
 
 dotenv.config();
 dotenv.config({
@@ -17,6 +18,18 @@ dotenv.config({
 
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+// Sessions (required for session-only Fortnox auth)
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
+    maxAge: 8 * 60 * 60 * 1000,
+  },
+}));
 
 createSupabaseClientFromEnv()
   .then((client) => {
@@ -44,17 +57,13 @@ app.use(
 );
 
 app.use(express.json());
-// Initialize Fortnox tokens from disk if available
-initFortnoxAuth(app).catch(() => {});
-
-
 
 app.use("/", helloWorldRouter);
 app.use("/supabase-example", supabaseExampleRouter);
 app.use("/api", orgDataRouter);
-app.use('/fortnox-employees', fortnoxEmployeesRouter);
-app.use('/fortnox-auth', fortnoxAuthRouter);
-
+app.use("/api", settingsRouter);
+app.use("/fortnox-employees", fortnoxEmployeesRouter);
+app.use("/fortnox-auth", fortnoxAuthRouter);
 
 // Simple config status endpoint
 app.get("/supabase/health", (req, res) => {
