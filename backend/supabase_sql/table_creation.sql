@@ -144,6 +144,45 @@ BEGIN
 END;
 $$;
 
+-- Organization Settings Table
+-- Stores all settings for each organization as JSON
+CREATE TABLE IF NOT EXISTS organization_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization TEXT UNIQUE NOT NULL,
+  settings_data JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index for faster organization lookups
+CREATE INDEX IF NOT EXISTS idx_organization_settings_org ON organization_settings(organization);
+
+-- Enable Row Level Security
+ALTER TABLE organization_settings ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policy: Organizations can only access their own settings
+-- This assumes you have a way to identify the current organization context
+-- You may need to adjust this based on your authentication/authorization setup
+CREATE POLICY organization_settings_policy ON organization_settings
+  FOR ALL
+  USING (
+    -- Allow access if the organization matches the current context
+    -- This is a placeholder - you'll need to implement organization context
+    -- For example, using a function that gets the current user's organization
+    organization = current_setting('app.current_organization', true)
+    OR
+    -- Or allow if user has admin role (adjust based on your auth setup)
+    EXISTS (
+      SELECT 1 FROM auth.users 
+      WHERE auth.users.id = auth.uid() 
+      AND auth.users.raw_user_meta_data->>'role' = 'admin'
+    )
+  );
+
+-- Alternative simpler policy if you handle organization filtering in your application:
+-- CREATE POLICY organization_settings_policy ON organization_settings FOR ALL USING (true);
+-- Then ensure your API layer filters by organization
+
 -- USAGE EXAMPLE
 -- Suppose your three Excel types have headers you want to mirror:
 -- For compensations: ["employee", "amount", "month"]
