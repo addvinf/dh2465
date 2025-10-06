@@ -1,4 +1,4 @@
-import { Settings, User, ChevronRight } from "lucide-react";
+import { Settings, ChevronRight } from "lucide-react";
 import { Button } from "./ui/Button";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import {
@@ -12,10 +12,30 @@ import { Link } from "react-router-dom";
 import React from "react";
 // Add framer-motion import
 import { AnimatePresence, motion } from "framer-motion";
+import { useSettings } from "../contexts/SettingsContext";
 
 export function Header() {
   const [navOpen, setNavOpen] = React.useState(false);
   const navRef = React.useRef<HTMLDivElement>(null);
+  const { settings, loading } = useSettings();
+
+  // Generate initials from contact person name
+  const getInitials = (name: string): string => {
+    if (!name) return "??";
+    const words = name.trim().split(/\s+/);
+    if (words.length >= 2) {
+      return `${words[0].charAt(0)}${words[1].charAt(0)}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const contactPerson = loading
+    ? "Laddar..."
+    : settings.organization.contactPerson || "Okänd Användare";
+  const organizationName = loading
+    ? "Laddar..."
+    : settings.organization.name || "Okänd Organisation";
+  const initials = loading ? "..." : getInitials(contactPerson);
 
   // Show dropdown on hover, hide on mouse leave
   const handleMouseLeave = () => setNavOpen(false);
@@ -145,7 +165,7 @@ export function Header() {
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-primary text-primary-foreground">
-                    ER
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -156,21 +176,19 @@ export function Header() {
             >
               <div className="flex items-center justify-start gap-2 p-2">
                 <div className="flex flex-col space-y-1 leading-none">
-                  <p className="font-medium text-sm">Edvin Ramström</p>
+                  <p className="font-medium text-sm">{contactPerson}</p>
                   <p className="w-[200px] truncate text-xs text-muted-foreground">
-                    Utvecklare, KTH
+                    {organizationName}
                   </p>
                 </div>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() =>
-                  alert("Profil-funktionen kommer att utvecklas senare")
-                }
-              >
-                <User className="mr-2 h-4 w-4" />
-                <span>Profil</span>
-              </DropdownMenuItem>
+              {/* <DropdownMenuItem asChild>
+                <Link to="/settings" className="flex items-center">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profil</span>
+                </Link>
+              </DropdownMenuItem> */}
               <DropdownMenuItem asChild>
                 <Link to="/settings" className="flex items-center">
                   <Settings className="mr-2 h-4 w-4" />
