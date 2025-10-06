@@ -115,7 +115,7 @@ export function PersonnelSection() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const data = new Uint8Array(ev.target?.result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: "array" });
+      const workbook = XLSX.read(data, { type: "array", cellDates: true });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
@@ -143,9 +143,19 @@ export function PersonnelSection() {
         const headers = jsonData[headerRowIndex] as string[];
         const dataRows = jsonData.slice(dataStartIndex) as any[][];
 
-        if (headers && dataRows.length > 0) {
+        // Convert Date objects to YYYY-MM-DD strings for consistent display
+        const processedDataRows = dataRows.map(row => 
+          row.map(cell => {
+            if (cell instanceof Date) {
+              return cell.toISOString().split('T')[0];
+            }
+            return cell;
+          })
+        );
+
+        if (headers && processedDataRows.length > 0) {
           setViewerHeaders(headers);
-          setViewerData(dataRows);
+          setViewerData(processedDataRows);
           setViewerFileName(file.name);
           setViewerOpen(true);
         } else {
