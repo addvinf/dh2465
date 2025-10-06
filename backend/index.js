@@ -7,7 +7,7 @@ import supabaseExampleRouter from "./routers/supabaseExample.js";
 import orgDataRouter from "./routers/orgData.js";
 import settingsRouter from "./routers/settings.js";
 import fortnoxEmployeesRouter from "./routers/fortnoxEmployees.js";
-import fortnoxAuthRouter, { initFortnoxAuth } from "./routers/fortnoxAuth.js";
+import fortnoxAuthRouter from "./routers/fortnoxAuth.js";
 import cors from "cors";
 import session from 'express-session';
 

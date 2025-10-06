@@ -96,6 +96,8 @@ export function PersonnelSection() {
     const errors = (result.items || []).filter((i) => i.error);
     setBatchErrors(errors);
     await loadPersonnel();
+  };
+
   // Handle Excel viewer close and reset file input
   const handleViewerClose = () => {
     setViewerOpen(false);
@@ -162,14 +164,6 @@ export function PersonnelSection() {
     reader.readAsArrayBuffer(file);
   };
 
-  // Save from ExcelViewer - would need additional processing to convert to PersonnelRecord[]
-  const handleViewerSave = (_rows: any[][]) => {
-    // This would need proper conversion from array format to PersonnelRecord format
-    toast({
-      description: "Excel import inte helt implementerad än",
-      variant: "destructive",
-    });
-    setViewerOpen(false);
   const handleToggleStatus = async (record: PersonnelRecord) => {
     try {
       // Use the dedicated toggle endpoint
