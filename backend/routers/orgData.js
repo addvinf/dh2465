@@ -1,6 +1,13 @@
-import express from "express";
-import multer from "multer";
-import XLSX from "xlsx";
+import express from 'express';
+import multer from 'multer';
+import XLSX from 'xlsx';
+import {
+  getSchema,
+  getColumnNames,
+  getColumnTypes,
+  getColumnDefaultStrings,
+  normalizeRecord,
+} from '../schema/orgSchema.js';
 
 const router = express.Router();
 const upload = multer({
@@ -16,66 +23,19 @@ function normalizeName(name) {
     .replace(/[^a-z0-9_]/g, "");
 }
 
-const TABLE_TYPES = new Set(["compensations", "monthly_retainer", "personnel"]);
-const EXPECTED_COLUMNS = {
-  compensations: [
-    "Upplagd av",
-    "Avser Mån/år",
-    "Ledare",
-    "Kostnadsställe",
-    "Aktivitetstyp",
-    "Antal",
-    "Ersättning",
-    "Eventuell kommentar",
-    "Datum utbet",
-  ],
-  monthly_retainer: [
-    "Ledare",
-    "KS",
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "Maj",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Okt",
-    "Nov",
-    "Dec",
-    "Summa",
-    "Semers",
-    "TOTALT",
-    "Soc avg",
-    "TOT KLUBB",
-  ],
-  personnel: [
-    "Upplagd av",
-    "Personnummer",
-    "Förnamn",
-    "Efternamn",
-    "Clearingnr",
-    "Bankkonto",
-    "Adress",
-    "Postnr",
-    "Postort",
-    "E-post",
-    "Kostnadsställe",
-    "Ändringsdag",
-    "Månad",
-    "Timme",
-    "Heldag",
-    "Annan",
-    "Kommentar",
-    "added_to_fortnox",
-    "fortnox_employee_id",
-    "Aktiv",
-    "Befattning",
-    "Skattesats",
-    "Sociala Avgifter",
-  ],
-};
+const TABLE_TYPES = new Set(['compensations', 'monthly_retainer', 'personnel']);
+
+function normalizeDefaultValues(arr) {
+  return arr.map((v) => {
+    if (v === null || typeof v === 'undefined') return null;
+    if (typeof v === 'boolean') return v ? 'true' : 'false';
+    if (typeof v === 'number' && Number.isFinite(v)) return String(v);
+    if (typeof v === 'object' && v !== null && Object.prototype.hasOwnProperty.call(v, 'raw')) {
+      return `RAW:${String(v.raw)}`;
+    }
+    return String(v);
+  });
+}
 
 function sheetToJson(sheet, opts = {}) {
   return XLSX.utils.sheet_to_json(sheet, { defval: null, ...opts });
@@ -92,16 +52,7 @@ function keepOriginalKeys(obj) {
 }
 
 function filterToExpected(type, record) {
-  const cols = EXPECTED_COLUMNS[type];
-  const out = {};
-  for (const c of cols) {
-    if (Object.prototype.hasOwnProperty.call(record, c)) {
-      out[c] = record[c];
-    } else {
-      out[c] = c === "added_to_fortnox" ? false : null;
-    }
-  }
-  return out;
+  return normalizeRecord(type, record);
 }
 
 async function bulkInsert(supabase, table, rows) {
@@ -255,13 +206,17 @@ async function insertRow(req, res, type) {
 
     const payloadRaw = keepOriginalKeys(req.body || {});
     // Filter to expected columns only
-    const cols = EXPECTED_COLUMNS[type];
+    const cols = getColumnNames(type);
     const payload = {};
     for (const c of cols) {
       if (Object.prototype.hasOwnProperty.call(payloadRaw, c)) {
         payload[c] = payloadRaw[c];
-      } else if (type === "personnel" && c === "added_to_fortnox") {
-        payload[c] = false;
+      } else {
+        // fill default if exists in schema
+        const colDef = getSchema(type).find((x) => x.name === c);
+        if (colDef && Object.prototype.hasOwnProperty.call(colDef, 'default')) {
+          payload[c] = colDef.default;
+        }
       }
     }
 
@@ -305,7 +260,7 @@ router.patch("/org/:org/:type/:id", async (req, res) => {
 
     const table = `${org}_${type}`;
     const payloadRaw = keepOriginalKeys(req.body || {});
-    const cols = EXPECTED_COLUMNS[type];
+  const cols = getColumnNames(type);
     const payload = {};
     for (const c of cols) {
       if (Object.prototype.hasOwnProperty.call(payloadRaw, c)) {
@@ -411,91 +366,42 @@ router.post("/org/:org/tables/create", async (req, res) => {
       return res.status(400).json({ error: "Invalid organisation name" });
 
     const body = req.body || {};
-    let comp_cols = Array.isArray(body.compensations)
-      ? body.compensations.map(String)
-      : [];
-    let ret_cols = Array.isArray(body.monthly_retainer)
-      ? body.monthly_retainer.map(String)
-      : [];
-    let pers_cols = Array.isArray(body.personnel)
-      ? body.personnel.map(String)
-      : [];
+    // Accept overrides from body; otherwise derive from central schema
+    let comp_cols = Array.isArray(body.compensations) ? body.compensations.map(String) : getColumnNames('compensations');
+    let ret_cols  = Array.isArray(body.monthly_retainer) ? body.monthly_retainer.map(String) : getColumnNames('monthly_retainer');
+    let pers_cols = Array.isArray(body.personnel) ? body.personnel.map(String) : getColumnNames('personnel');
 
-    // If not provided, use CSV template defaults
-    if (comp_cols.length === 0) {
-      comp_cols = [
-        "Upplagd av",
-        "Avser Mån/år",
-        "Ledare",
-        "Kostnadsställe",
-        "Aktivitetstyp",
-        "Antal",
-        "Ersättning",
-        "Eventuell kommentar",
-        "Datum utbet",
-      ];
-    }
-    if (ret_cols.length === 0) {
-      ret_cols = [
-        "Ledare",
-        "KS",
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "Maj",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Okt",
-        "Nov",
-        "Dec",
-        "Summa",
-        "Semers",
-        "TOTALT",
-        "Soc avg",
-        "TOT KLUBB",
-      ];
-    }
-    if (pers_cols.length === 0) {
-      pers_cols = [
-        "Upplagd av",
-        "Personnummer",
-        "Förnamn",
-        "Efternamn",
-        "Clearingnr",
-        "Bankkonto",
-        "Adress",
-        "Postnr",
-        "Postort",
-        "E-post",
-        "Kostnadsställe",
-        "Ändringsdag",
-        "Månad",
-        "Timme",
-        "Heldag",
-        "Annan",
-        "Kommentar",
-        "Aktiv",
-        "Befattning",
-        "Skattesats",
-        "Sociala Avgifter",
-      ];
-    }
+    const comp_types = Array.isArray(body.compensations) ? comp_cols.map(() => 'TEXT') : getColumnTypes('compensations');
+    const ret_types  = Array.isArray(body.monthly_retainer) ? ret_cols.map(() => 'TEXT') : getColumnTypes('monthly_retainer');
+    const pers_types = Array.isArray(body.personnel) ? pers_cols.map(() => 'TEXT') : getColumnTypes('personnel');
 
-    const comp_types = comp_cols.map(() => "text");
-    const ret_types = ret_cols.map(() => "text");
-    const pers_types = pers_cols.map(() => "text");
+    const comp_defaults = Array.isArray(body.compensationsDefaults)
+      ? normalizeDefaultValues(body.compensationsDefaults)
+      : Array.isArray(body.compensations)
+        ? Array(comp_cols.length).fill(null)
+        : getColumnDefaultStrings('compensations');
+    const ret_defaults = Array.isArray(body.monthlyRetainerDefaults)
+      ? normalizeDefaultValues(body.monthlyRetainerDefaults)
+      : Array.isArray(body.monthly_retainer)
+        ? Array(ret_cols.length).fill(null)
+        : getColumnDefaultStrings('monthly_retainer');
+    const pers_defaults = Array.isArray(body.personnelDefaults)
+      ? normalizeDefaultValues(body.personnelDefaults)
+      : Array.isArray(body.personnel)
+        ? Array(pers_cols.length).fill(null)
+        : getColumnDefaultStrings('personnel');
 
     const { error } = await supabase.rpc("create_org_tables", {
       org_name: org,
       comp_cols,
       comp_types,
+      comp_defaults,
       ret_cols,
       ret_types,
+      ret_defaults,
       pers_cols,
       pers_types,
+      pers_defaults,
     });
     if (error) return res.status(500).json({ error: error.message });
     res.json({
