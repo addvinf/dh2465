@@ -8,5 +8,6 @@ export { SettingsHeader } from "./SettingsHeader";
 export { EmployerFeesCard } from "./general/EmployerFeesCard";
 export { AgeBasedFeesCard } from "./general/AgeBasedFeesCard";
 export { OrganizationInfoCard } from "./organisation/OrganizationInfoCard";
+export { PositionsCard } from "./organisation/PositionsCard";
 export { AccountsCard } from "./organisation/AccountsCard";
 export { CostCentersCard } from "./organisation/CostCentersCard";

@@ -154,6 +154,7 @@ function createDefaultSettings(organizationName) {
       organizationNumber: "",
       contactPerson: "",
       contactEmail: "",
+      positions: ["Domare", "Tränare", "Admin", "Kassör"],
     },
     integrations: {
       googleSheets: {

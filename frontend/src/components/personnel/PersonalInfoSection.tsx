@@ -9,10 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import {
-  KOSTNADSSTALLE_OPTIONS,
-  BEFATTNING_OPTIONS,
-} from "../../constants/personnelForm";
+import { useSettings } from "../../contexts/SettingsContext";
 import type { PersonnelRecord } from "../../types/personnel";
 import type { ValidationWarning } from "../../utils/personnelValidation";
 
@@ -36,15 +33,30 @@ export function PersonalInfoSection({
   onInputChange,
   onFieldBlur,
 }: PersonalInfoSectionProps) {
+  const { settings } = useSettings();
+
+  // Convert settings data to dropdown options
+  const positionOptions = (settings.organization.positions || []).map(
+    (position) => ({
+      value: position,
+      label: position,
+    })
+  );
+
+  const costCenterOptions = settings.costCenters.map((center) => ({
+    value: center.id,
+    label: `${center.code} - ${center.name}`,
+  }));
+
   const [customKostnadsställe, setCustomKostnadsställe] = useState(() => {
-    const kostnadExists = KOSTNADSSTALLE_OPTIONS.some(
+    const kostnadExists = costCenterOptions.some(
       (opt) => opt.value === formData.Kostnadsställe
     );
     return !kostnadExists && !!formData.Kostnadsställe;
   });
 
   const [customBefattning, setCustomBefattning] = useState(() => {
-    const befattningExists = BEFATTNING_OPTIONS.some(
+    const befattningExists = positionOptions.some(
       (opt) => opt.value === formData.Befattning
     );
     return !befattningExists && !!formData.Befattning;
@@ -252,7 +264,7 @@ export function PersonalInfoSection({
                   <SelectValue placeholder="Välj befattning" />
                 </SelectTrigger>
                 <SelectContent>
-                  {BEFATTNING_OPTIONS.map((option) => (
+                  {positionOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -300,7 +312,7 @@ export function PersonalInfoSection({
                   <SelectValue placeholder="Välj kostnadsställe" />
                 </SelectTrigger>
                 <SelectContent>
-                  {KOSTNADSSTALLE_OPTIONS.map((option) => (
+                  {costCenterOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>

@@ -8,7 +8,8 @@ import {
   normalizePersonnummer,
   type ValidationWarning,
 } from "../utils/personnelValidation";
-import { REQUIRED_FIELDS } from "../constants/personnelForm";
+// Required fields for personnel form validation
+const REQUIRED_FIELDS = ["Personnummer", "Förnamn", "Efternamn"] as const;
 import type { PersonnelRecord, PersonnelFormProps } from "../types/personnel";
 
 export function usePersonnelForm({

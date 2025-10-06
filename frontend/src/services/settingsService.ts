@@ -52,7 +52,8 @@ export const settingsService = {
         name: organizationName,
         organizationNumber: "",
         contactPerson: "",
-        contactEmail: ""
+        contactEmail: "",
+        positions: ["Domare", "Tränare", "Admin", "Kassör"]
       },
       integrations: {
         googleSheets: {

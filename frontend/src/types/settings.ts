@@ -20,6 +20,7 @@ export interface Organization {
   organizationNumber: string;
   contactPerson: string;
   contactEmail: string;
+  positions?: string[];
 }
 
 export interface Account {

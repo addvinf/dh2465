@@ -50,6 +50,7 @@ const defaultSettings: Settings = {
     organizationNumber: "802411-1234",
     contactPerson: "Anna Larsson",
     contactEmail: "anna@halmstadbk.se",
+    positions: ["Domare", "Tränare", "Admin", "Kassör"],
   },
   accounts: [
     {
