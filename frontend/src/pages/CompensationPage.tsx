@@ -14,15 +14,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 import { toast } from "../hooks/use-toast";
 import { SimpleCompensationTable } from "../components/compensation/SimpleCompensationTable";
 import { SimplePersonView } from "../components/compensation/SimplePersonView";
 import { CompensationViewToggle } from "../components/compensation/Features/CompensationViewToggle";
 import { CompensationModal } from "../components/compensation/CompensationModal";
+import { CompensationExcelUpload } from "../components/compensation/CompensationExcelUpload";
+import { CompensationExcelViewer } from "../components/compensation/CompensationExcelViewer";
 import type {
   CompensationRecord,
   CompensationViewMode,
 } from "../types/compensation";
+import type { PersonnelRecord } from "../types/personnel";
+import type { CostCenter } from "../types/settings";
 import { groupCompensationsByPerson } from "../utils/compensationUtils";
 import {
   fetchCompensations,
@@ -30,6 +40,9 @@ import {
   updateCompensation,
   deleteCompensation,
 } from "../services/compensationService";
+import { fetchPersonnel } from "../services/personnelService";
+import { settingsService } from "../services/settingsService";
+import { useCompensationExcelImport } from "../hooks/useCompensationForm";
 import { Header } from "../components/Header";
 
 export function LonerPage() {
@@ -39,12 +52,19 @@ export function LonerPage() {
   const [viewMode, setViewMode] =
     useState<CompensationViewMode>("compensation");
   const [selectedPeriod, setSelectedPeriod] = useState("all");
+  const [personnelList, setPersonnelList] = useState<PersonnelRecord[]>([]);
+  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
+  const [activityTypes, setActivityTypes] = useState<string[]>([]);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCompensation, setEditingCompensation] =
     useState<CompensationRecord | null>(null);
   const [defaultPersonName, setDefaultPersonName] = useState("");
+
+  // Excel import state
+  const [excelModalOpen, setExcelModalOpen] = useState(false);
+  const excelImport = useCompensationExcelImport(personnelList);
 
   const generatePeriodOptions = () => {
     const options = [{ value: "all", label: "Alla perioder" }];
@@ -88,8 +108,43 @@ export function LonerPage() {
     }
   };
 
+  const loadPersonnel = async () => {
+    try {
+      const result = await fetchPersonnel(org);
+      setPersonnelList(result.data);
+    } catch (err) {
+      console.error("Failed to load personnel:", err);
+      // Non-critical error, don't show to user
+    }
+  };
+
+  const loadSettings = async () => {
+    try {
+      const settings = await settingsService.fetchSettings(org);
+      setCostCenters(settings.costCenters || []);
+
+      // Set some default activity types if none configured
+      const defaultActivityTypes = [
+        "Tävling",
+        "Träning",
+        "Administration",
+        "Evenemang",
+        "Utbildning",
+        "Möte",
+      ];
+      setActivityTypes(defaultActivityTypes);
+    } catch (err) {
+      console.error("Failed to load settings:", err);
+      // Set defaults on error
+      setCostCenters([]);
+      setActivityTypes([]);
+    }
+  };
+
   useEffect(() => {
     loadCompensations();
+    loadPersonnel();
+    loadSettings();
   }, []);
 
   // Filter compensations by selected period
@@ -172,6 +227,32 @@ export function LonerPage() {
     setDefaultPersonName("");
   };
 
+  // Excel import handlers
+  const openExcelImport = () => {
+    setExcelModalOpen(true);
+  };
+
+  const closeExcelImport = () => {
+    setExcelModalOpen(false);
+    excelImport.handleCancel();
+  };
+
+  const handleExcelSave = async (data: Partial<CompensationRecord>[]) => {
+    // Add each compensation record individually
+    for (const record of data) {
+      await addCompensation(org, record as any);
+    }
+
+    toast({
+      description: `${data.length} ersättningar importerades framgångsrikt`,
+      variant: "default",
+    });
+
+    // Reload data and close modal
+    await loadCompensations();
+    closeExcelImport();
+  };
+
   const handleModalSave = async (
     data: CompensationRecord | Omit<CompensationRecord, "id">
   ) => {
@@ -195,7 +276,7 @@ export function LonerPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={openExcelImport}>
               <Upload className="h-4 w-4 mr-2" />
               Importera Excel
             </Button>
@@ -356,6 +437,38 @@ export function LonerPage() {
             compensation={editingCompensation || undefined}
             defaultPersonName={defaultPersonName}
           />
+
+          {/* Excel Import Modal */}
+          <Dialog open={excelModalOpen} onOpenChange={closeExcelImport}>
+            <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Importera ersättningar från Excel</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {!excelImport.uploadedData ? (
+                  <CompensationExcelUpload
+                    onDataUploaded={excelImport.handleFileUpload}
+                    onError={excelImport.handleUploadError}
+                  />
+                ) : (
+                  <CompensationExcelViewer
+                    data={excelImport.uploadedData}
+                    personnelList={personnelList}
+                    onSave={(data: Partial<CompensationRecord>[]) =>
+                      excelImport.handleSave(() => handleExcelSave(data))
+                    }
+                    onCancel={closeExcelImport}
+                    loading={excelImport.formState.loading}
+                  />
+                )}
+                {excelImport.error && (
+                  <div className="bg-red-950/20 border border-red-600 rounded-lg p-4">
+                    <p className="text-red-200 text-sm">{excelImport.error}</p>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </Card>
       </div>
     </>
