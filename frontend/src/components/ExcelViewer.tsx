@@ -85,12 +85,12 @@ export function ExcelViewer({
   }, [data]);
 
   // Validate a specific cell value based on the header
-  const validateCell = (
-    rowIndex: number,
-    colIndex: number,
+  const getCellClass = (
+    _rowIndex: number,
+    _colIndex: number,
     value: any,
     headerName: string
-  ): ValidationWarning[] => {
+  ) => {
     const cellWarnings: ValidationWarning[] = [];
     const strValue = String(value || "").trim();
 
@@ -134,7 +134,7 @@ export function ExcelViewer({
     dataToValidate.forEach((row, rowIndex) => {
       row.forEach((cellValue, colIndex) => {
         const headerName = headers[colIndex];
-        const warnings = validateCell(
+        const warnings = getCellClass(
           rowIndex,
           colIndex,
           cellValue,
@@ -146,7 +146,7 @@ export function ExcelViewer({
           newValidationErrors.set(cellKey, warnings);
 
           // Add warnings with row context
-          warnings.forEach((warning) => {
+          warnings.forEach((warning: ValidationWarning) => {
             allWarningsArray.push({
               ...warning,
               field: `${headerName} (rad ${rowIndex + 1})`,
@@ -199,7 +199,7 @@ export function ExcelViewer({
 
   const handleSaveAll = () => {
     // Normalize personnummer before saving
-    const normalizedData = editableData.map((row, rowIndex) =>
+    const normalizedData = editableData.map((row, _rowIndex) =>
       row.map((cellValue, colIndex) => {
         const headerName = headers[colIndex];
         if (headerName === "Personnummer" && cellValue) {

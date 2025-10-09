@@ -1,6 +1,6 @@
 import { Users, Table as TableIcon } from "lucide-react";
-import { Button } from "../ui/Button";
-import type { CompensationViewMode } from "../../types/compensation";
+import { Button } from "../../ui/Button";
+import type { CompensationViewMode } from "../../../types/compensation";
 
 interface CompensationViewToggleProps {
   viewMode: CompensationViewMode;

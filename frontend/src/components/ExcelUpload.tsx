@@ -85,7 +85,10 @@ export function ExcelUpload({ onFileUpload }: ExcelUploadProps) {
   const handleBackendUpload = async () => {
     setError("");
     try {
-      const { headers, rows } = await fetchPersonnel("test_förening");
+      const { data } = await fetchPersonnel("test_förening");
+      // Convert personnel data to expected format for onFileUpload
+      const headers = data.length > 0 ? Object.keys(data[0]) : [];
+      const rows = data.map((item) => Object.values(item));
       onFileUpload(rows, headers, "Backend: test_förening");
     } catch (err: any) {
       setError(err.message || "Kunde inte hämta data från backend");

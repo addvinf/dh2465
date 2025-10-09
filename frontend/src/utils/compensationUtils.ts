@@ -22,8 +22,18 @@ export function groupCompensationsByPerson(
       };
     }
     
-    acc[personnelName].compensations.push(compensation);
-    acc[personnelName].totalCompensation += compensation["Total ersättning"] || 0;
+    // Ensure total compensation is calculated if missing
+    const totalCompensation = compensation["Total ersättning"] || 
+      ((compensation.Antal || 0) * (compensation.Ersättning || 0));
+    
+    // Update the compensation record with calculated total
+    const compensationWithTotal = {
+      ...compensation,
+      "Total ersättning": totalCompensation
+    };
+    
+    acc[personnelName].compensations.push(compensationWithTotal);
+    acc[personnelName].totalCompensation += totalCompensation;
     
     return acc;
   }, {} as Record<string, PersonCompensation>);

@@ -71,7 +71,7 @@ export interface CompensationTableProps {
   compensations: CompensationRecord[];
   onEdit: (compensation: CompensationRecord) => void;
   onDelete: (id: string) => void;
-  onAddNew: () => void;
+  onAddNew: (data?: Partial<CompensationRecord>) => void;
   loading?: boolean;
 }
 
