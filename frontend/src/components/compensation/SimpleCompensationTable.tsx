@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -8,18 +7,9 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { Button } from "../ui/Button";
-import { Input } from "../ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 import { useSettings } from "../../contexts/SettingsContext";
-import { SearchablePersonnelSelect } from "./Features/SearchablePersonnelSelect";
-import { StatusDot } from "./Features/StatusDot";
+import { CompensationTableRow } from "./Features/CompensationTableRow";
+import { CompensationAddRow } from "./Features/CompensationAddRow";
 import type { CompensationRecord } from "../../types/compensation";
 
 interface SimpleCompensationTableProps {
@@ -76,27 +66,6 @@ export function SimpleCompensationTable({
 
   const calculateTotal = (antal: number, ersattning: number) => {
     return antal * ersattning;
-  };
-
-  const generateMonthOptions = () => {
-    const options = [];
-    const currentDate = new Date();
-    for (let i = -6; i <= 6; i++) {
-      const date = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + i,
-        1
-      );
-      const monthYear = date.toLocaleDateString("sv-SE", {
-        month: "long",
-        year: "numeric",
-      });
-      const value = `${date.getFullYear()}-${String(
-        date.getMonth() + 1
-      ).padStart(2, "0")}`;
-      options.push({ label: monthYear, value });
-    }
-    return options;
   };
 
   const resetForm = () => {
@@ -220,194 +189,39 @@ export function SimpleCompensationTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-8"></TableHead>
-              <TableHead className="whitespace-nowrap">Upplagd av</TableHead>
-              <TableHead className="whitespace-nowrap">Månad/år</TableHead>
-              <TableHead className="whitespace-nowrap">Ledare</TableHead>
-              <TableHead className="whitespace-nowrap">
+              <TableHead className="w-8 text-xs"></TableHead>
+              <TableHead className="whitespace-nowrap text-xs">
+                Upplagd av
+              </TableHead>
+              <TableHead className="whitespace-nowrap text-xs">
+                Månad/år
+              </TableHead>
+              <TableHead className="whitespace-nowrap text-xs">
+                Ledare
+              </TableHead>
+              <TableHead className="whitespace-nowrap text-xs">
                 Kostnadsställe
               </TableHead>
-              <TableHead className="whitespace-nowrap">Aktivitetstyp</TableHead>
-              <TableHead className="whitespace-nowrap">Antal</TableHead>
-              <TableHead className="whitespace-nowrap">Ersättning</TableHead>
-              <TableHead className="whitespace-nowrap">Total</TableHead>
-              <TableHead className="whitespace-nowrap">Datum utbet</TableHead>
-              <TableHead className="whitespace-nowrap">Kommentar</TableHead>
-              <TableHead className="w-20">Åtgärder</TableHead>
+              <TableHead className="whitespace-nowrap text-xs">
+                Aktivitetstyp
+              </TableHead>
+              <TableHead className="whitespace-nowrap text-xs">Antal</TableHead>
+              <TableHead className="whitespace-nowrap text-xs">
+                Ersättning
+              </TableHead>
+              <TableHead className="whitespace-nowrap text-xs">Total</TableHead>
+              <TableHead className="whitespace-nowrap text-xs">
+                Datum utbet
+              </TableHead>
+              <TableHead className="whitespace-nowrap text-xs">
+                Kommentar
+              </TableHead>
+              <TableHead className="w-20 sticky right-0 text-xs">
+                Åtgärder
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* Add Form Row */}
-            {showAddForm && (
-              <TableRow className="bg-muted/20 h-12">
-                <TableCell className="p-1 w-8">
-                  <StatusDot status="pending" />
-                </TableCell>
-                <TableCell className="p-1">
-                  <Input
-                    value={formData["Upplagd av"]}
-                    onChange={(e) =>
-                      setFormData({ ...formData, "Upplagd av": e.target.value })
-                    }
-                    placeholder="Upplagd av"
-                    className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8"
-                  />
-                </TableCell>
-                <TableCell className="p-1">
-                  <Select
-                    value={formData["Avser Mån/år"]}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, "Avser Mån/år": value })
-                    }
-                  >
-                    <SelectTrigger className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8">
-                      <SelectValue placeholder="Välj månad" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {generateMonthOptions().map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell className="p-1">
-                  <SearchablePersonnelSelect
-                    value={formData.Ledare}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, Ledare: value })
-                    }
-                    placeholder="Välj ledare"
-                    className="[&>div>button]:border-0 [&>div>button]:bg-transparent [&>div>button]:rounded-none [&>div>button]:shadow-none [&>div>button]:focus:bg-background [&>div>button]:focus:shadow-sm [&>div>button]:h-8"
-                  />
-                </TableCell>
-                <TableCell className="p-1">
-                  <Select
-                    value={formData.Kostnadsställe}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, Kostnadsställe: value })
-                    }
-                  >
-                    <SelectTrigger className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8">
-                      <SelectValue placeholder="Kostnadsställe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {settings.costCenters
-                        .filter((cc) => cc.name && cc.name.trim() !== "")
-                        .map((cc) => (
-                          <SelectItem key={cc.id} value={cc.name}>
-                            {cc.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell className="p-1">
-                  <Input
-                    value={formData.Aktivitetstyp}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        Aktivitetstyp: e.target.value,
-                      })
-                    }
-                    placeholder="Aktivitetstyp"
-                    className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8"
-                  />
-                </TableCell>
-                <TableCell className="p-1">
-                  <Input
-                    type="number"
-                    value={formData.Antal || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        Antal:
-                          e.target.value === "" ? 0 : Number(e.target.value),
-                      })
-                    }
-                    min="0"
-                    step="1"
-                    placeholder="Antal"
-                    className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                  />
-                </TableCell>
-                <TableCell className="p-1">
-                  <Input
-                    type="number"
-                    value={formData.Ersättning || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        Ersättning:
-                          e.target.value === "" ? 0 : Number(e.target.value),
-                      })
-                    }
-                    min="0"
-                    step="0.01"
-                    placeholder="Ersättning"
-                    className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                  />
-                </TableCell>
-                <TableCell className="p-1">
-                  <span className="font-medium text-sm">
-                    {formatCurrency(
-                      calculateTotal(formData.Antal, formData.Ersättning)
-                    )}
-                  </span>
-                </TableCell>
-                <TableCell className="p-1">
-                  <Input
-                    type="date"
-                    value={formData["Datum utbet"]}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        "Datum utbet": e.target.value,
-                      })
-                    }
-                    className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8"
-                  />
-                </TableCell>
-                <TableCell className="p-1">
-                  <Input
-                    value={formData["Eventuell kommentar"]}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        "Eventuell kommentar": e.target.value,
-                      })
-                    }
-                    placeholder="Kommentar..."
-                    className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8"
-                  />
-                </TableCell>
-                <TableCell className="p-1">
-                  <div className="flex space-x-1">
-                    <Button
-                      size="sm"
-                      onClick={handleAdd}
-                      className="h-7 w-7 p-0"
-                    >
-                      <Save className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setShowAddForm(false);
-                        resetForm();
-                      }}
-                      className="h-7 w-7 p-0"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-
             {/* Existing Compensations */}
             {compensations
               .slice()
@@ -423,270 +237,47 @@ export function SimpleCompensationTable({
                 const personB = b.Ledare || "";
                 return personA.localeCompare(personB, "sv-SE");
               })
-              .map((compensation) => {
-                const isEditing = editingId === compensation.id;
+              .map((compensation) => (
+                <CompensationTableRow
+                  key={compensation.id}
+                  compensation={compensation}
+                  isEditing={editingId === compensation.id}
+                  formData={formData}
+                  onFormDataChange={setFormData}
+                  onEdit={() => startEdit(compensation)}
+                  onSave={() => handleEdit(compensation)}
+                  onCancel={cancelEdit}
+                  onDelete={() => handleDelete(compensation.id!)}
+                  onDoubleClick={() => startEdit(compensation)}
+                  formatCurrency={formatCurrency}
+                  calculateTotal={calculateTotal}
+                />
+              ))}
 
-                if (isEditing) {
-                  return (
-                    <TableRow
-                      key={compensation.id}
-                      className="bg-muted/20 h-12"
-                    >
-                      <TableCell className="p-1 w-8">
-                        <StatusDot status="pending" />
-                      </TableCell>
-                      <TableCell className="p-1">
-                        <Input
-                          value={formData["Upplagd av"]}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              "Upplagd av": e.target.value,
-                            })
-                          }
-                          className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8"
-                        />
-                      </TableCell>
-                      <TableCell className="p-1">
-                        <Select
-                          value={formData["Avser Mån/år"]}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, "Avser Mån/år": value })
-                          }
-                        >
-                          <SelectTrigger className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {generateMonthOptions().map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="p-1">
-                        <SearchablePersonnelSelect
-                          value={formData.Ledare}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, Ledare: value })
-                          }
-                          placeholder="Välj ledare"
-                          className="[&>div>button]:border-0 [&>div>button]:bg-transparent [&>div>button]:rounded-none [&>div>button]:shadow-none [&>div>button]:focus:bg-background [&>div>button]:focus:shadow-sm [&>div>button]:h-8"
-                        />
-                      </TableCell>
-                      <TableCell className="p-1">
-                        <Select
-                          value={formData.Kostnadsställe}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, Kostnadsställe: value })
-                          }
-                        >
-                          <SelectTrigger className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {settings.costCenters
-                              .filter((cc) => cc.name && cc.name.trim() !== "")
-                              .map((cc) => (
-                                <SelectItem key={cc.id} value={cc.name}>
-                                  {cc.name}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="p-1">
-                        <Input
-                          value={formData.Aktivitetstyp}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              Aktivitetstyp: e.target.value,
-                            })
-                          }
-                          className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8"
-                        />
-                      </TableCell>
-                      <TableCell className="p-1">
-                        <Input
-                          type="number"
-                          value={formData.Antal || ""}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              Antal:
-                                e.target.value === ""
-                                  ? 0
-                                  : Number(e.target.value),
-                            })
-                          }
-                          min="0"
-                          step="1"
-                          className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                        />
-                      </TableCell>
-                      <TableCell className="p-1">
-                        <Input
-                          type="number"
-                          value={formData.Ersättning || ""}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              Ersättning:
-                                e.target.value === ""
-                                  ? 0
-                                  : Number(e.target.value),
-                            })
-                          }
-                          min="0"
-                          step="0.01"
-                          className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                        />
-                      </TableCell>
-                      <TableCell className="p-1">
-                        <span className="font-medium text-sm">
-                          {formatCurrency(
-                            calculateTotal(formData.Antal, formData.Ersättning)
-                          )}
-                        </span>
-                      </TableCell>
-                      <TableCell className="p-1">
-                        <Input
-                          type="date"
-                          value={formData["Datum utbet"]}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              "Datum utbet": e.target.value,
-                            })
-                          }
-                          className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8"
-                        />
-                      </TableCell>
-                      <TableCell className="p-1">
-                        <Input
-                          value={formData["Eventuell kommentar"]}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              "Eventuell kommentar": e.target.value,
-                            })
-                          }
-                          className="border-0 bg-transparent focus:bg-background rounded-none shadow-none focus:shadow-sm h-8"
-                        />
-                      </TableCell>
-                      <TableCell className="p-1">
-                        <div className="flex space-x-1">
-                          <Button
-                            size="sm"
-                            onClick={() => handleEdit(compensation)}
-                            className="h-7 w-7 p-0"
-                          >
-                            <Save className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={cancelEdit}
-                            className="h-7 w-7 p-0"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                }
-
-                return (
-                  <TableRow
-                    key={compensation.id}
-                    className="hover:bg-accent/50 cursor-pointer h-10"
-                    onDoubleClick={() => startEdit(compensation)}
-                  >
-                    <TableCell className="w-8 py-2">
-                      <StatusDot status={compensation["Fortnox status"]} />
-                    </TableCell>
-                    <TableCell className="py-2 text-xs whitespace-nowrap">
-                      {compensation["Upplagd av"] || "—"}
-                    </TableCell>
-                    <TableCell className="py-2 text-xs whitespace-nowrap">
-                      {compensation["Avser Mån/år"] &&
-                        new Date(
-                          compensation["Avser Mån/år"] + "-01"
-                        ).toLocaleDateString("sv-SE", {
-                          month: "long",
-                          year: "numeric",
-                        })}
-                    </TableCell>
-                    <TableCell className="py-2 text-xs whitespace-nowrap">
-                      {compensation.Ledare || "—"}
-                    </TableCell>
-                    <TableCell className="py-2 text-xs whitespace-nowrap">
-                      {compensation.Kostnadsställe || "—"}
-                    </TableCell>
-                    <TableCell className="py-2 text-xs whitespace-nowrap">
-                      {compensation.Aktivitetstyp || "—"}
-                    </TableCell>
-                    <TableCell className="py-2 text-xs">
-                      {compensation.Antal || 0}
-                    </TableCell>
-                    <TableCell className="py-2 text-xs">
-                      {formatCurrency(compensation.Ersättning || 0)}
-                    </TableCell>
-                    <TableCell className="py-2 text-xs font-medium">
-                      {formatCurrency(
-                        calculateTotal(
-                          compensation.Antal || 0,
-                          compensation.Ersättning || 0
-                        )
-                      )}
-                    </TableCell>
-                    <TableCell className="py-2 text-xs">
-                      {compensation["Datum utbet"]
-                        ? new Date(
-                            compensation["Datum utbet"]
-                          ).toLocaleDateString("sv-SE")
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="py-2 text-xs max-w-[120px] truncate">
-                      {compensation["Eventuell kommentar"] || "—"}
-                    </TableCell>
-                    <TableCell className="py-2">
-                      <div className="flex space-x-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => startEdit(compensation)}
-                          className="h-7 w-7 p-0 hover:bg-muted"
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(compensation.id!)}
-                          className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+            {/* Add Form Row */}
+            <CompensationAddRow
+              showAddForm={showAddForm}
+              formData={formData}
+              onFormDataChange={setFormData}
+              onAdd={handleAdd}
+              onCancel={() => {
+                setShowAddForm(false);
+                resetForm();
+              }}
+              onShowAddForm={() => {
+                setShowAddForm(true);
+                resetForm();
+              }}
+              formatCurrency={formatCurrency}
+              calculateTotal={calculateTotal}
+            />
 
             {/* Empty State */}
             {compensations.length === 0 && !showAddForm && (
               <TableRow>
                 <TableCell
                   colSpan={12}
-                  className="text-center py-12 text-muted-foreground"
+                  className="text-center py-12 text-muted-foreground text-xs"
                 >
                   Inga ersättningar registrerade
                 </TableCell>
@@ -694,22 +285,6 @@ export function SimpleCompensationTable({
             )}
           </TableBody>
         </Table>
-      </div>
-
-      {/* Bottom Add Button */}
-      <div className="flex justify-start">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setShowAddForm(true);
-            resetForm();
-          }}
-          className="flex items-center space-x-2"
-        >
-          <Plus className="h-3 w-3" />
-          <span>Ny ersättning</span>
-        </Button>
       </div>
     </div>
   );
