@@ -2,14 +2,12 @@ import { ChevronDown, ChevronRight, Plus, User } from "lucide-react";
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "../../ui/table";
 import { Button } from "../../ui/Button";
-
-import { CompensationRowActions } from "./CompensationRowActions";
+import { MiniCompensationRow } from "./MiniCompensationRow";
 import type {
   PersonCompensation,
   CompensationRecord,
@@ -39,29 +37,19 @@ export function PersonRow({
     }).format(amount);
   };
 
-  const getStatusBadge = (status?: CompensationRecord["Fortnox status"]) => {
-    const baseClasses = "text-xs px-2 py-1 rounded-full";
-
-    switch (status) {
-      case "sent":
-        return `${baseClasses} bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300`;
-      case "error":
-        return `${baseClasses} bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300`;
-      case "pending":
-      default:
-        return `${baseClasses} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300`;
-    }
+  const calculateTotal = (antal: number, ersattning: number) => {
+    return antal * ersattning;
   };
 
-  const getStatusText = (status?: CompensationRecord["Fortnox status"]) => {
-    switch (status) {
-      case "sent":
-        return "Skickad";
-      case "error":
-        return "Fel";
-      case "pending":
-      default:
-        return "Väntande";
+  const handleEditCompensation = async (
+    id: string,
+    updates: Partial<CompensationRecord>
+  ) => {
+    // Find the compensation and create the updated version
+    const compensation = personComp.compensations.find((c) => c.id === id);
+    if (compensation) {
+      const updatedCompensation = { ...compensation, ...updates };
+      await onEditCompensation(updatedCompensation);
     }
   };
 
@@ -112,17 +100,18 @@ export function PersonRow({
       {/* Expanded Compensation Details */}
       {isExpanded && (
         <div className="px-4 pb-4">
-          <div className="rounded-md border mt-2">
+          <div className="rounded-md mt-2 bg-muted/30">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/20">
-                  <TableHead className="h-9 text-xs">Aktivitetstyp</TableHead>
-                  <TableHead className="h-9 text-xs">Avser Mån/År</TableHead>
+                <TableRow className="">
+                  <TableHead className="h-9 text-xs w-8"></TableHead>
+                  <TableHead className="h-9 text-xs">Upplagd av</TableHead>
+                  <TableHead className="h-9 text-xs">Månad/år</TableHead>
                   <TableHead className="h-9 text-xs">Kostnadsställe</TableHead>
+                  <TableHead className="h-9 text-xs">Aktivitetstyp</TableHead>
                   <TableHead className="h-9 text-xs">Antal</TableHead>
                   <TableHead className="h-9 text-xs">Ersättning</TableHead>
                   <TableHead className="h-9 text-xs">Total</TableHead>
-                  <TableHead className="h-9 text-xs">Status</TableHead>
                   <TableHead className="h-9 text-xs">Datum utbet</TableHead>
                   <TableHead className="h-9 text-xs">Kommentar</TableHead>
                   <TableHead className="h-9 text-xs">Åtgärder</TableHead>
@@ -144,66 +133,21 @@ export function PersonRow({
                     return activityA.localeCompare(activityB, "sv-SE");
                   })
                   .map((compensation) => (
-                    <TableRow
+                    <MiniCompensationRow
                       key={compensation.id}
-                      className="hover:bg-muted/30 h-10 cursor-pointer"
-                      onDoubleClick={() => onEditCompensation(compensation)}
-                    >
-                      <TableCell className="py-2 text-xs font-medium">
-                        {compensation.Aktivitetstyp || "—"}
-                      </TableCell>
-                      <TableCell className="py-2 text-xs">
-                        {compensation["Avser Mån/år"] || "—"}
-                      </TableCell>
-                      <TableCell className="py-2 text-xs">
-                        {compensation.Kostnadsställe || "—"}
-                      </TableCell>
-                      <TableCell className="py-2 text-xs">
-                        {compensation.Antal || 0}
-                      </TableCell>
-                      <TableCell className="py-2 text-xs">
-                        {formatCurrency(compensation.Ersättning || 0)}
-                      </TableCell>
-                      <TableCell className="py-2 text-xs font-medium">
-                        {formatCurrency(
-                          (compensation.Antal || 0) *
-                            (compensation.Ersättning || 0)
-                        )}
-                      </TableCell>
-                      <TableCell className="py-2">
-                        <span
-                          className={getStatusBadge(
-                            compensation["Fortnox status"]
-                          )}
-                        >
-                          {getStatusText(compensation["Fortnox status"])}
-                        </span>
-                      </TableCell>
-                      <TableCell className="py-2 text-xs">
-                        {compensation["Datum utbet"]
-                          ? new Date(
-                              compensation["Datum utbet"]
-                            ).toLocaleDateString("sv-SE")
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="py-2 text-xs max-w-[120px] truncate">
-                        {compensation["Eventuell kommentar"] || "—"}
-                      </TableCell>
-                      <TableCell className="py-2">
-                        <CompensationRowActions
-                          compensation={compensation}
-                          onEdit={onEditCompensation}
-                          onDelete={onDeleteCompensation}
-                        />
-                      </TableCell>
-                    </TableRow>
+                      compensation={compensation}
+                      onEdit={handleEditCompensation}
+                      onDelete={onDeleteCompensation}
+                      formatCurrency={formatCurrency}
+                      calculateTotal={calculateTotal}
+                    />
                   ))}
               </TableBody>
             </Table>
           </div>
 
           {/* Summary for this person */}
-          <div className="mt-3 flex justify-between items-center p-3 bg-muted/10 rounded-md">
+          <div className="mt-3 flex justify-between items-center p-3 bg-muted/30 rounded-md">
             <span className="text-xs font-medium text-muted-foreground">
               Total för {personComp.personnelName}:
             </span>
