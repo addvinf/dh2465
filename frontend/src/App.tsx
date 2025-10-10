@@ -10,29 +10,69 @@ import { PersonnelSection } from "./pages/PersonnelSection";
 import { KompensationPage } from "./pages/CompensationPage";
 import { MontlyRetainerPage } from "./pages/MonthlyRetainerPage";
 import { SettingsSection } from "./pages/SettingsSection";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AuthCallback from "./pages/AuthCallback";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import UpdatePasswordPage from "./pages/UpdatePasswordPage";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <div className="dark min-h-screen">
     <QueryClientProvider client={queryClient}>
-      <SettingsProvider>
-        <TooltipProvider>
-          <Toaster />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<FrontPage />} />
-              <Route path="/admin" element={<AdminPage />} />
-              <Route path="/personal" element={<PersonnelSection />} />
-              <Route path="/kompensation" element={<KompensationPage />} />
-              <Route path="/monthly" element={<MontlyRetainerPage />} />
-              <Route path="/settings" element={<SettingsSection />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </SettingsProvider>
+      <AuthProvider>
+        <SettingsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <BrowserRouter>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/update-password" element={<UpdatePasswordPage />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
+                {/* Protected routes */}
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <FrontPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin" element={
+                  <ProtectedRoute requiredRole={['admin', 'manager']}>
+                    <AdminPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/personal" element={
+                  <ProtectedRoute>
+                    <PersonnelSection />
+                  </ProtectedRoute>
+                } />
+                <Route path="/kompensation" element={
+                  <ProtectedRoute>
+                    <KompensationPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/monthly" element={
+                  <ProtectedRoute>
+                    <MontlyRetainerPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <SettingsSection />
+                  </ProtectedRoute>
+                } />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </SettingsProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </div>
 );

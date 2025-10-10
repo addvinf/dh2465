@@ -12,6 +12,7 @@ import type {
   AgeBasedFee,
 } from "../types/settings";
 import { settingsService } from "../services/settingsService";
+import { useAuth } from "./AuthContext";
 
 // Default settings
 const defaultSettings: Settings = {
@@ -360,9 +361,15 @@ export function SettingsProvider({
     loading: false,
     error: null,
   });
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  // Load settings on mount
+  // Load settings only when authenticated and not loading
   useEffect(() => {
+    // Don't load settings if auth is still loading or user is not authenticated
+    if (authLoading || !isAuthenticated) {
+      return;
+    }
+
     const loadSettings = async () => {
       try {
         dispatch({ type: "SET_LOADING", payload: true });
@@ -380,7 +387,7 @@ export function SettingsProvider({
     };
 
     loadSettings();
-  }, [organizationId]);
+  }, [organizationId, isAuthenticated, authLoading]);
 
   const saveSettings = async (newSettings: Settings) => {
     try {

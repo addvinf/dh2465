@@ -1,9 +1,8 @@
 import type { PersonnelRecord } from "../types/personnel";
+import { apiService } from "./apiService";
 
 export async function fetchPersonnel(org: string): Promise<{ data: PersonnelRecord[]; count: number }> {
-  const res = await fetch(`http://localhost:3000/api/org/${encodeURIComponent(org)}/personnel`);
-  if (!res.ok) throw new Error("Kunde inte hämta data från backend");
-  const response = await res.json();
+  const response = await apiService.get<{ rows: PersonnelRecord[] }>(`/api/org/${encodeURIComponent(org)}/personnel`);
 
   // Return structured data
   return {
@@ -27,52 +26,28 @@ export async function addPersonnel(org: string, person: Partial<PersonnelRecord>
     Aktiv: true,
   };
 
-  const res = await fetch(`http://localhost:3000/api/org/${encodeURIComponent(org)}/personnel`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(personWithDefaults),
-  });
-  if (!res.ok) throw new Error("Kunde inte lägga till person");
-  return await res.json();
+  return await apiService.post<PersonnelRecord>(`/api/org/${encodeURIComponent(org)}/personnel`, personWithDefaults);
 }
 
 export async function updatePersonnel(org: string, id: string, person: Partial<PersonnelRecord>): Promise<PersonnelRecord> {
-  const res = await fetch(`http://localhost:3000/api/org/${encodeURIComponent(org)}/personnel/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(person),
-  });
-  if (!res.ok) throw new Error("Kunde inte uppdatera person");
-  return await res.json();
+  return await apiService.patch<PersonnelRecord>(`/api/org/${encodeURIComponent(org)}/personnel/${id}`, person);
 }
 
 export async function togglePersonnelStatus(org: string, id: string): Promise<PersonnelRecord> {
-  const res = await fetch(`http://localhost:3000/api/org/${encodeURIComponent(org)}/personnel/${id}/toggle-status`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-  });
-  if (!res.ok) throw new Error("Kunde inte ändra status");
-  const response = await res.json();
-  return response.data || response;
+  const response = await apiService.patch<{ data?: PersonnelRecord } | PersonnelRecord>(`/api/org/${encodeURIComponent(org)}/personnel/${id}/toggle-status`);
+  return (response as { data: PersonnelRecord }).data || (response as PersonnelRecord);
 }
 
 export async function deletePersonnel(org: string, id: string): Promise<void> {
-  const res = await fetch(`http://localhost:3000/api/org/${encodeURIComponent(org)}/personnel/${id}`, {
-    method: "DELETE",
-  });
-  if (!res.ok) throw new Error("Kunde inte ta bort person");
+  await apiService.delete<void>(`/api/org/${encodeURIComponent(org)}/personnel/${id}`);
 }
 
 export async function bulkUpdatePersonnel(
   org: string,
   personnelData: Partial<PersonnelRecord>[]
 ): Promise<{ added: number; updated: number; errors: string[] }> {
-  const res = await fetch(`http://localhost:3000/api/org/${encodeURIComponent(org)}/personnel/bulk`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ personnel: personnelData }),
-  });
-  
-  if (!res.ok) throw new Error("Kunde inte genomföra bulk-uppdatering");
-  return await res.json();
+  return await apiService.post<{ added: number; updated: number; errors: string[] }>(
+    `/api/org/${encodeURIComponent(org)}/personnel/bulk`, 
+    { personnel: personnelData }
+  );
 }

@@ -8,6 +8,8 @@ import orgDataRouter from "./routers/orgData.js";
 import settingsRouter from "./routers/settings.js";
 import fortnoxEmployeesRouter from "./routers/fortnoxEmployees.js";
 import fortnoxAuthRouter from "./routers/fortnoxAuth.js";
+import authRouter from "./routers/auth.js";
+import { authenticateToken, requireRole } from "./middleware/auth.js";
 import cors from "cors";
 import session from 'express-session';
 
@@ -58,12 +60,16 @@ app.use(
 
 app.use(express.json());
 
+// Public routes
 app.use("/", helloWorldRouter);
-app.use("/supabase-example", supabaseExampleRouter);
-app.use("/api", orgDataRouter);
-app.use("/api", settingsRouter);
-app.use("/fortnox-employees", fortnoxEmployeesRouter);
+app.use("/auth", authRouter);
 app.use("/fortnox-auth", fortnoxAuthRouter);
+
+// Protected routes - require authentication
+app.use("/supabase-example", authenticateToken, supabaseExampleRouter);
+app.use("/api", authenticateToken, orgDataRouter);
+app.use("/api", authenticateToken, settingsRouter);
+app.use("/fortnox-employees", authenticateToken, requireRole(['admin', 'manager']), fortnoxEmployeesRouter);
 
 // Simple config status endpoint
 app.get("/supabase/health", (req, res) => {

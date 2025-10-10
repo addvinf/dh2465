@@ -1,4 +1,4 @@
-import { Settings, ChevronRight } from "lucide-react";
+import { Settings, ChevronRight, LogOut, User } from "lucide-react";
 import { Button } from "./ui/Button";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import {
@@ -8,18 +8,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import React from "react";
 // Add framer-motion import
 import { AnimatePresence, motion } from "framer-motion";
 import { useSettings } from "../contexts/SettingsContext";
+import { useAuth } from "../contexts/AuthContext";
 
 export function Header() {
   const [navOpen, setNavOpen] = React.useState(false);
   const navRef = React.useRef<HTMLDivElement>(null);
   const { settings, loading } = useSettings();
+  const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
-  // Generate initials from contact person name
+  // Generate initials from user email or contact person name
   const getInitials = (name: string): string => {
     if (!name) return "??";
     const words = name.trim().split(/\s+/);
@@ -29,13 +32,25 @@ export function Header() {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const getUserInitials = () => {
+    if (!user?.email) return "??";
+    return user.email.charAt(0).toUpperCase();
+  };
+
   const contactPerson = loading
     ? "Laddar..."
     : settings.organization.contactPerson || "Okänd Användare";
   const organizationName = loading
     ? "Laddar..."
     : settings.organization.name || "Okänd Organisation";
-  const initials = loading ? "..." : getInitials(contactPerson);
+  const initials = isAuthenticated 
+    ? getUserInitials() 
+    : (loading ? "..." : getInitials(contactPerson));
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   // Show dropdown on hover, hide on mouse leave
   const handleMouseLeave = () => setNavOpen(false);
@@ -176,19 +191,24 @@ export function Header() {
             >
               <div className="flex items-center justify-start gap-2 p-2">
                 <div className="flex flex-col space-y-1 leading-none">
-                  <p className="font-medium text-sm">{contactPerson}</p>
+                  <p className="font-medium text-sm">
+                    {isAuthenticated ? user?.email : contactPerson}
+                  </p>
                   <p className="w-[200px] truncate text-xs text-muted-foreground">
-                    {organizationName}
+                    {isAuthenticated 
+                      ? `Role: ${user?.role || 'User'}` 
+                      : organizationName
+                    }
                   </p>
                 </div>
               </div>
               <DropdownMenuSeparator />
-              {/* <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild>
                 <Link to="/settings" className="flex items-center">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profil</span>
                 </Link>
-              </DropdownMenuItem> */}
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/settings" className="flex items-center">
                   <Settings className="mr-2 h-4 w-4" />
@@ -196,12 +216,9 @@ export function Header() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() =>
-                  alert("Logga ut-funktionen kommer att utvecklas senare")
-                }
-              >
-                Logga ut
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logga ut</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -1,13 +1,11 @@
 // src/services/monthlyRetainerService.ts
+import { apiService } from "./apiService";
+
 export async function fetchMonthlyRetainer(org: string) {
-  const res = await fetch(`http://localhost:3000/api/org/${org}/monthly_retainer`);
-  if (!res.ok) {
-    let errorMsg = "Kunde inte hämta månad-data";
-    try {
-      const errData = await res.json();
-      if (errData?.error) errorMsg += ": " + errData.error;
-    } catch {}
+  try {
+    return await apiService.get(`/api/org/${org}/monthly_retainer`);
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : "Kunde inte hämta månad-data";
     throw new Error(errorMsg);
   }
-  return await res.json();
 }

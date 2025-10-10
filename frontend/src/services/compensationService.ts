@@ -1,15 +1,11 @@
 // src/services/compensationService.ts
-
+import { apiService } from "./apiService";
 
 export async function fetchCompensations(org: string) {
-  const res = await fetch(`http://localhost:3000/api/org/${org}/compensations`);
-  if (!res.ok) {
-    let errorMsg = "Kunde inte hämta kompensationsdata";
-    try {
-      const errData = await res.json();
-      if (errData?.error) errorMsg += ": " + errData.error;
-    } catch {}
+  try {
+    return await apiService.get(`/api/org/${org}/compensations`);
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : "Kunde inte hämta kompensationsdata";
     throw new Error(errorMsg);
   }
-  return await res.json();
 }
