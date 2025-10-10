@@ -1,32 +1,17 @@
-# DH2465 - Development Setup
+# DH2465 - Full Stack Application
 
-## 🔓 Disabling Authentication for Development
+A full-stack web application with React frontend and Node.js backend.
 
-To test the application without authentication, create a `.env` file in the `frontend/` directory:
+## Getting Started
 
-```bash
-cd frontend
-touch .env
+1. **Frontend Setup**: See `frontend/README.md` for authentication setup
+2. **Backend Setup**: Navigate to `backend/` directory and run `npm install`
+
+## Project Structure
+
 ```
-
-Add this line to `frontend/.env`:
-
-```env
-VITE_DISABLE_AUTH=true
-```
-
-### What this does:
-
-- **Bypasses login/register pages** - You won't need to create an account or log in
-- **Skips authentication checks** - All protected routes become accessible
-- **Enables immediate testing** - You can access all application features right away
-
-⚠️ **Important**: Only use this in development. Never set this to `true` in production.
-
-### To re-enable authentication:
-
-Change the value to `false` or remove the line entirely:
-
-```env
-VITE_DISABLE_AUTH=false
+dh2465/
+├── frontend/          # React TypeScript application
+├── backend/           # Node.js Express server
+└── README.md         # This file
 ```
