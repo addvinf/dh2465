@@ -263,4 +263,45 @@ router.post('/update-password', async (req, res) => {
   }
 });
 
+// Resend verification email endpoint
+router.post('/resend-verification', async (req, res) => {
+  if (DISABLE_AUTH) {
+    return res.json({ 
+      message: 'Auth disabled - mock verification resend',
+      success: true
+    });
+  }
+
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const supabase = await createSupabaseClientFromEnv();
+    if (!supabase) {
+      return res.status(500).json({ error: 'Database connection failed' });
+    }
+
+    // Resend verification email using Supabase Auth
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email.toLowerCase()
+    });
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ 
+      message: 'Verification email sent successfully',
+      success: true
+    });
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

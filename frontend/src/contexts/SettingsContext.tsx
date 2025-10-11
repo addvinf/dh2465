@@ -386,7 +386,9 @@ export function SettingsProvider({
       }
     };
 
-    loadSettings();
+    loadSettings().catch(error => {
+      console.error('Failed to load settings:', error);
+    });
   }, [organizationId, isAuthenticated, authLoading]);
 
   const saveSettings = async (newSettings: Settings) => {

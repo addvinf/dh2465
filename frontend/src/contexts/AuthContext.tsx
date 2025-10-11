@@ -5,7 +5,7 @@ interface AuthContextType {
   user: AuthUser | null;
   session: AuthSession | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, role?: string) => Promise<void>;
+  register: (email: string, password: string, role?: string) => Promise<{ requiresVerification: boolean; message?: string }>;
   registerOnly: (email: string, password: string, role?: string) => Promise<any>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -66,7 +66,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
         setSession(parsedSession);
-        fetchUserProfile(parsedSession.access_token);
+        fetchUserProfile(parsedSession.access_token).catch(error => {
+          console.error('Failed to fetch user profile on init:', error);
+        });
       } catch (error) {
         console.error('Error parsing stored session:', error);
         clearAuth();
@@ -85,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // If token is expired, logout immediately
       if (isTokenExpired(session)) {
         console.log('Session expired - logging out user');
-        logout();
+        logout().catch(error => console.error('Logout error during expiry check:', error));
         return;
       }
 
@@ -99,7 +101,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (timeUntilExpiry <= refreshThreshold && timeUntilExpiry > 0 && session.refresh_token) {
           console.log(`Token expires in ${Math.round(timeUntilExpiry / 60)} minutes, refreshing...`);
-          refreshToken();
+          refreshToken().catch(error => {
+            console.error('Failed to refresh token:', error);
+          });
         }
       }
     };
@@ -149,11 +153,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.log('Token refresh failed:', errorData.error || response.statusText);
-        logout();
+        logout().catch(error => console.error('Logout error during refresh:', error));
       }
     } catch (error) {
       console.error('Token refresh error:', error);
-      logout();
+      logout().catch(error => console.error('Logout error during refresh:', error));
     }
   };
 
@@ -193,12 +197,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await authService.register({ email, password, role });
       
       if (data.requiresVerification) {
-        throw new Error('Please check your email for verification link');
+        // Return a special result instead of throwing an error
+        return { requiresVerification: true, message: 'Please check your email for verification link' };
       }
 
       setSession(data.session);
       setUser(data.user);
       localStorage.setItem('authSession', JSON.stringify(data.session));
+      return { requiresVerification: false };
     } finally {
       setIsLoading(false);
     }
@@ -210,11 +216,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await authService.register({ email, password, role });
       
       if (data.requiresVerification) {
-        throw new Error('Please check your email for verification link');
+        // Return a special result instead of throwing an error
+        return { requiresVerification: true, message: 'Please check your email for verification link' };
       }
 
       // Don't set session or user data - just create the account
-      return data;
+      return { requiresVerification: false, data };
     } finally {
       setIsLoading(false);
     }

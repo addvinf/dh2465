@@ -18,6 +18,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AuthCallback from "./pages/AuthCallback";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import UpdatePasswordPage from "./pages/UpdatePasswordPage";
+import EmailVerificationPage from "./pages/EmailVerificationPage";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
                 {/* Public routes */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/email-verification" element={<EmailVerificationPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/update-password" element={<UpdatePasswordPage />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />

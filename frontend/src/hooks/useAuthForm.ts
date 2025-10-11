@@ -83,10 +83,20 @@ export function useAuthForm() {
       }
 
       // Attempt registration
+      let result;
       if (redirectPath === '/login') {
-        await registerOnly(credentials.email, credentials.password, credentials.role);
+        result = await registerOnly(credentials.email, credentials.password, credentials.role);
       } else {
-        await authRegister(credentials.email, credentials.password, credentials.role);
+        result = await authRegister(credentials.email, credentials.password, credentials.role);
+      }
+      
+      // Handle email verification case
+      if (result?.requiresVerification) {
+        // Navigate to email verification page with email in state
+        navigate('/email-verification', { 
+          state: { email: credentials.email } 
+        });
+        return;
       }
       
       toast({
