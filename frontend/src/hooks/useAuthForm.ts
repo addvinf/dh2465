@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { type LoginCredentials, type RegisterCredentials } from '../services/authService';
+import { type LoginCredentials, type RegisterCredentials, authService } from '../services/authService';
 import { 
   validateLoginForm, 
   validateRegisterForm, 
@@ -15,6 +15,7 @@ import { useToast } from '../components/ui/use-toast';
 export function useAuthForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<AuthValidationError[]>([]);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const { login: authLogin, register: authRegister, registerOnly } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -57,6 +58,21 @@ export function useAuthForm() {
       }]);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const checkEmailExists = async (email: string): Promise<boolean> => {
+    if (!email || validateEmail(email).length > 0) return false;
+    
+    try {
+      setIsCheckingEmail(true);
+      const response = await authService.checkEmailExists(email);
+      return response.exists;
+    } catch (error) {
+      console.error('Error checking email existence:', error);
+      return false;
+    } finally {
+      setIsCheckingEmail(false);
     }
   };
 
@@ -168,11 +184,13 @@ export function useAuthForm() {
   return {
     login,
     register,
+    checkEmailExists,
     validateField,
     clearErrors,
     getFieldError,
     getFieldWarning,
     isSubmitting,
+    isCheckingEmail,
     hasErrors,
     validationErrors,
   };

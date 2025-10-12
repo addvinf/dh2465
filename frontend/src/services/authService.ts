@@ -152,4 +152,21 @@ export const authService = {
 
     return response.json();
   },
+
+  async checkEmailExists(email: string): Promise<{ exists: boolean }> {
+    const response = await fetch(`${API_BASE_URL}/auth/check-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to check email');
+    }
+
+    return response.json();
+  },
 };

@@ -205,7 +205,7 @@ router.post('/reset-password', async (req, res) => {
     }
 
     res.json({ 
-      message: 'If an account with that email exists, we have sent a password reset link.' 
+      message: 'Password reset link has been sent to your email address.' 
     });
   } catch (error) {
     console.error('Password reset error:', error);
@@ -300,6 +300,45 @@ router.post('/resend-verification', async (req, res) => {
     });
   } catch (error) {
     console.error('Resend verification error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Check if email is already registered endpoint
+router.post('/check-email', async (req, res) => {
+  if (DISABLE_AUTH) {
+    return res.json({ 
+      exists: false,
+      message: 'Auth disabled - email checking disabled'
+    });
+  }
+
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const supabase = await createSupabaseClientFromEnv();
+    if (!supabase) {
+      return res.status(500).json({ error: 'Database connection failed' });
+    }
+
+    // Use admin API to check if user exists
+    const { data, error } = await supabase.auth.admin.listUsers();
+    
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    const emailExists = data.users.some(user => 
+      user.email?.toLowerCase() === email.toLowerCase()
+    );
+
+    res.json({ exists: emailExists });
+  } catch (error) {
+    console.error('Check email error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

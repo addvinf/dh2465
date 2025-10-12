@@ -19,11 +19,47 @@ import { usePasswordForm } from '../hooks/usePasswordForm';
 export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('admin'); // Default to admin as per previous requirement
-  const { register, isSubmitting, getFieldError } = useAuthForm();
+  const [emailError, setEmailError] = useState<string>('');
+  const { register, isSubmitting, checkEmailExists, isCheckingEmail, getFieldError } = useAuthForm();
+
+  const handleEmailBlur = async () => {
+    if (email) {
+      // Clear previous error
+      setEmailError('');
+      
+      // Check if email already exists
+      const emailExists = await checkEmailExists(email);
+      if (emailExists) {
+        setEmailError('This email is already registered. Please use a different email or try logging in.');
+      }
+    }
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    
+    // Clear email error when user starts typing
+    if (emailError) {
+      setEmailError('');
+    }
+  };
 
   const handlePasswordSubmit = async (password: string, confirmPassword?: string) => {
     if (!confirmPassword) {
       throw new Error('Confirm password is required');
+    }
+
+    // Check for email error before submitting
+    if (emailError) {
+      throw new Error('Please fix email issues before submitting');
+    }
+
+    // Final check if email already exists (in case user didn't blur)
+    const emailExists = await checkEmailExists(email);
+    if (emailExists) {
+      setEmailError('This email is already registered. Please use a different email or try logging in.');
+      throw new Error('Email already exists');
     }
 
     // Validate form before submitting
@@ -66,12 +102,20 @@ export const RegisterPage: React.FC = () => {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
+                onBlur={handleEmailBlur}
                 required
                 placeholder="Enter your email"
                 autoComplete="email"
-                className={getFieldError('email') ? 'border-destructive' : ''}
+                className={emailError || getFieldError('email') ? 'border-destructive' : ''}
+                disabled={isCheckingEmail}
               />
+              {isCheckingEmail && (
+                <p className="text-sm text-muted-foreground">Checking email availability...</p>
+              )}
+              {emailError && (
+                <p className="text-sm text-destructive">{emailError}</p>
+              )}
               {getFieldError('email') && (
                 <p className="text-sm text-destructive">{getFieldError('email')}</p>
               )}
@@ -120,7 +164,7 @@ export const RegisterPage: React.FC = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || isSubmitting}
+              disabled={isLoading || isSubmitting || isCheckingEmail || !!emailError}
             >
               {(isLoading || isSubmitting) ? "Creating Account..." : "Create Account"}
             </Button>

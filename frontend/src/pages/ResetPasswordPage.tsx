@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Loader2, Mail, ArrowLeft } from 'lucide-react';
 import { authService } from '../services/authService';
+import { useAuthForm } from '../hooks/useAuthForm';
 
 const ResetPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -14,6 +15,7 @@ const ResetPasswordPage: React.FC = () => {
   const [error, setError] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const navigate = useNavigate();
+  const { checkEmailExists, isCheckingEmail } = useAuthForm();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,8 +24,15 @@ const ResetPasswordPage: React.FC = () => {
     setMessage('');
 
     try {
+      // Check if email exists before attempting reset
+      const emailExists = await checkEmailExists(email);
+      if (!emailExists) {
+        setError('No account found with that email address. Please check your email or sign up for a new account.');
+        return;
+      }
+
       const data = await authService.resetPassword(email);
-      setMessage(data.message || 'Password reset email sent successfully!');
+      setMessage(data.message || 'Password reset link has been sent to your email address.');
       setEmailSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error. Please try again.');
@@ -42,7 +51,7 @@ const ResetPasswordPage: React.FC = () => {
             </div>
             <CardTitle className="text-2xl">Check Your Email</CardTitle>
             <CardDescription>
-              We've sent a password reset link to your email address
+              A password reset link has been sent to {email}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -109,13 +118,16 @@ const ResetPasswordPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isLoading || isCheckingEmail}
               />
+              {isCheckingEmail && (
+                <p className="text-sm text-muted-foreground">Checking email...</p>
+              )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Send Reset Link
+            <Button type="submit" className="w-full" disabled={isLoading || isCheckingEmail}>
+              {(isLoading || isCheckingEmail) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isCheckingEmail ? "Checking Email..." : isLoading ? "Sending..." : "Send Reset Link"}
             </Button>
 
             <div className="text-center space-y-2">

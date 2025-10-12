@@ -13,6 +13,7 @@ const UpdatePasswordPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [countdown, setCountdown] = useState(3);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -21,11 +22,23 @@ const UpdatePasswordPage: React.FC = () => {
     try {
       await authService.updatePassword(password, accessToken!, refreshToken || '');
       setSuccess(true);
-      // Auto-redirect to login after 3 seconds
-      setTimeout(() => {
-        navigate('/login', { 
-          state: { message: 'Password updated successfully. Please log in with your new password.' }
+      setCountdown(3);
+      
+      // Start countdown timer
+      const countdownTimer = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownTimer);
+            return 0;
+          }
+          return prev - 1;
         });
+      }, 1000);
+      
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        clearInterval(countdownTimer);
+        navigate('/login');
       }, 3000);
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'Network error. Please try again.');
@@ -111,7 +124,7 @@ const UpdatePasswordPage: React.FC = () => {
           <CardContent className="text-center space-y-4">
             <Alert>
               <AlertDescription>
-                Redirecting you to login page in 3 seconds...
+                Redirecting you to login page in {countdown} seconds...
               </AlertDescription>
             </Alert>
             <Button asChild>
