@@ -8,7 +8,7 @@ import {
 import { Button } from "../ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
-import * as XLSX from "xlsx";
+import { isExcelFile, parseSheetToObjects } from "../../utils/excelUtils";
 import type { CompensationRecord } from "../../types/compensation";
 import {
   EXPECTED_HEADERS,
@@ -38,64 +38,17 @@ export function CompensationExcelUpload({
       setUploadInfo(null);
 
       try {
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: "array" });
-
-        // Get the first worksheet
-        const worksheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[worksheetName];
-
-        // Convert to JSON to analyze structure
-        const rawData = XLSX.utils.sheet_to_json(worksheet, {
-          header: 1,
-        }) as any[][];
-
-        if (rawData.length === 0) {
-          throw new Error("Excel-filen är tom");
-        }
-
-        // Find header row (look for row containing expected headers)
-        let headerRowIndex = -1;
-        for (let i = 0; i < Math.min(5, rawData.length); i++) {
-          const row = rawData[i];
-          const hasExpectedHeaders = EXPECTED_HEADERS.some((header) =>
-            row.some(
-              (cell: any) =>
-                String(cell).toLowerCase().includes(header.toLowerCase()) ||
-                header.toLowerCase().includes(String(cell).toLowerCase())
-            )
-          );
-
-          if (hasExpectedHeaders) {
-            headerRowIndex = i;
-            break;
-          }
-        }
-
-        if (headerRowIndex === -1) {
-          throw new Error(
-            `Kunde inte hitta förväntade kolumnrubriker. Förväntade rubriker: ${EXPECTED_HEADERS.join(
-              ", "
-            )}`
-          );
-        }
-
-        // Convert data starting from header row
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-          range: headerRowIndex,
-          defval: "",
+        const { rows, headerRow } = await parseSheetToObjects(file, {
+          expectedHeaders: EXPECTED_HEADERS,
+          maxScanRows: 5,
         });
 
-        if (jsonData.length === 0) {
-          throw new Error("Inga data-rader hittades efter rubrikraden");
+        if (rows.length === 0) {
+          throw new Error("Inga giltiga datarader hittades");
         }
 
         // Normalize and clean the data
-        const normalizedData = jsonData.map((row: any) =>
-          normalizeCompensationRecord(row)
-        );
-
-        // Filter out completely empty rows
+        const normalizedData = rows.map((row: any) => normalizeCompensationRecord(row));
         const validData = normalizedData.filter((row) =>
           Object.values(row).some((value) => value && String(value).trim())
         );
@@ -107,7 +60,7 @@ export function CompensationExcelUpload({
         setUploadInfo({
           fileName: file.name,
           rowCount: validData.length,
-          headerRow: headerRowIndex + 1,
+          headerRow: headerRow + 1,
         });
 
         onDataUploaded(validData);
@@ -125,16 +78,7 @@ export function CompensationExcelUpload({
 
   const handleFile = useCallback(
     (file: File) => {
-      const validTypes = [
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "application/vnd.ms-excel",
-        "application/vnd.ms-excel.sheet.macroEnabled.12",
-      ];
-
-      if (
-        !validTypes.includes(file.type) &&
-        !file.name.match(/\.(xlsx|xls)$/i)
-      ) {
+      if (!isExcelFile(file)) {
         onError("Endast Excel-filer (.xlsx, .xls) stöds");
         return;
       }

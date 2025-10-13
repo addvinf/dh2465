@@ -1,4 +1,5 @@
 import type { CompensationRecord } from "../types/compensation";
+import { normalizeDate, normalizePeriod } from "./excelUtils";
 import type { PersonnelRecord } from "../types/personnel";
 
 export interface ValidationError {
@@ -270,13 +271,13 @@ export function validateField(
 export function normalizeCompensationRecord(data: any): Partial<CompensationRecord> {
   return {
     "Upplagd av": String(data["Upplagd av"] || "").trim(),
-    "Avser Mån/år": String(data["Avser Mån/år"] || "").trim(),
+    "Avser Mån/år": normalizePeriod(data["Avser Mån/år"]) || String(data["Avser Mån/år"] || "").trim(),
     "Ledare": String(data["Ledare"] || "").trim(),
     "Kostnadsställe": String(data["Kostnadsställe"] || "").trim(),
     "Aktivitetstyp": String(data["Aktivitetstyp"] || "").trim(),
     "Antal": Number(data["Antal"]) || 0,
     "Ersättning": Number(data["Ersättning"]) || 0,
-    "Datum utbet": String(data["Datum utbet"] || "").trim(),
+    "Datum utbet": normalizeDate(data["Datum utbet"]) || String(data["Datum utbet"] || "").trim(),
     "Eventuell kommentar": String(data["Eventuell kommentar"] || "").trim(),
   };
 }

@@ -53,8 +53,8 @@ export function LonerPage() {
     useState<CompensationViewMode>("compensation");
   const [selectedPeriod, setSelectedPeriod] = useState("all");
   const [personnelList, setPersonnelList] = useState<PersonnelRecord[]>([]);
-  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
-  const [activityTypes, setActivityTypes] = useState<string[]>([]);
+  const [, setCostCenters] = useState<CostCenter[]>([]);
+  const [, setActivityTypes] = useState<string[]>([]);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);

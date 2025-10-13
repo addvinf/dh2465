@@ -10,7 +10,7 @@ import {
 } from "../components/ui/card";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import { fetchPersonnel } from "../services/personnelService";
-import * as XLSX from "xlsx";
+import { isExcelFile, parseSheetToAOA } from "../utils/excelUtils";
 
 interface ExcelUploadProps {
   onFileUpload: (data: any[][], headers: string[], fileName: string) => void;
@@ -24,45 +24,23 @@ export function ExcelUpload({ onFileUpload }: ExcelUploadProps) {
   const handleFile = (file: File) => {
     setError("");
 
-    if (!file.name.match(/\.(xlsx|xls)$/)) {
+    if (!isExcelFile(file)) {
       setError("Endast Excel-filer (.xlsx, .xls) är tillåtna");
       return;
     }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-        if (jsonData.length === 0) {
+    parseSheetToAOA(file, { padRows: true })
+      .then(({ headers, rows, rowCount }) => {
+        if (!rowCount) {
           setError("Excel-filen verkar vara tom");
           return;
         }
-
-        const headers = jsonData[0] as string[];
-        let rows = jsonData.slice(1) as any[][];
-
-        // Pad each row to headers.length
-        rows = rows.map((row) => {
-          const padded = Array(headers.length).fill("");
-          row.forEach((cell, i) => {
-            padded[i] = cell;
-          });
-          return padded;
-        });
-
         onFileUpload(rows, headers, file.name);
-      } catch (err) {
+      })
+      .catch(() =>
         setError(
           "Kunde inte läsa Excel-filen. Kontrollera att filen inte är skadad."
-        );
-      }
-    };
-    reader.readAsArrayBuffer(file);
+        )
+      );
   };
 
   const handleDrop = (e: React.DragEvent) => {

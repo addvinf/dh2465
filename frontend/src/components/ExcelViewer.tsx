@@ -46,7 +46,7 @@ import {
   normalizePersonnummer,
   type ValidationWarning,
 } from "../utils/personnelValidation";
-import * as XLSX from "xlsx";
+import { downloadExcelAOA } from "../utils/excelUtils";
 
 interface ExcelViewerProps {
   data: any[][];
@@ -217,10 +217,7 @@ export function ExcelViewer({
   };
 
   const handleDownload = () => {
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...editableData]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Data");
-    XLSX.writeFile(wb, `redigerad_${fileName}`);
+    downloadExcelAOA(`redigerad_${fileName}`, headers, editableData);
 
     toast({
       title: "Fil nedladdad",
@@ -385,7 +382,11 @@ export function ExcelViewer({
                                     }
                                   >
                                     <span className="truncate">
-                                      {row[colIndex] || ""}
+                                      {(() => {
+                                        const v = row[colIndex];
+                                        if (v instanceof Date) return v.toISOString().slice(0, 10);
+                                        return v ?? "";
+                                      })()}
                                     </span>
                                     <div className="flex items-center gap-1">
                                       {hasActualErrors && (
