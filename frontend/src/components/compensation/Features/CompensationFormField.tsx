@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../ui/select";
-import { SearchablePersonnelSelect } from "./SearchablePersonnelSelect";
+import { PersonnelSearchInput } from "../../personnel/PersonnelPopup/PersonnelSearchInput";
 import { useSettings } from "../../../contexts/SettingsContext";
 
 interface CompensationFormFieldProps {
@@ -132,11 +132,11 @@ export function CompensationFormField({
 
     case "personnel-select":
       return (
-        <SearchablePersonnelSelect
+        <PersonnelSearchInput
           value={value as string}
-          onValueChange={(val) => onChange(val)}
-          placeholder={placeholder || "Välj ledare"}
-          className={`[&>div>button]:border-0 [&>div>button]:bg-transparent [&>div>button]:rounded-none [&>div>button]:shadow-none [&>div>button]:focus:bg-background [&>div>button]:focus:shadow-sm [&>div>button]:h-auto [&>div>button]:text-xs ${className}`}
+          onChange={(val) => onChange(val)}
+          placeholder={placeholder || "Skriv för att söka personal..."}
+          className={`${baseInputClasses} ${className}`}
         />
       );
 

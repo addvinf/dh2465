@@ -6,8 +6,6 @@ import {
   CheckCircle2,
   Info,
   Users,
-  ChevronDown,
-  User,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Card, CardContent } from "../ui/card";
@@ -17,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+import { PersonnelSearchInput } from "../personnel/PersonnelPopup/PersonnelSearchInput";
 import type { CompensationRecord } from "../../types/compensation";
 import type { PersonnelRecord } from "../../types/personnel";
 import {
@@ -54,7 +53,6 @@ export function CompensationExcelViewer({
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "success" | "error"
   >("idle");
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   // Initialize editable data
   useEffect(() => {
@@ -78,21 +76,6 @@ export function CompensationExcelViewer({
 
     setEditableData(initialized);
   }, [data, personnelList]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    if (!activeDropdown) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      if (!target.closest("[data-dropdown-container]")) {
-        setActiveDropdown(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [activeDropdown]);
 
   const updateCell = useCallback(
     (rowIndex: number, field: string, newValue: string) => {
@@ -138,119 +121,25 @@ export function CompensationExcelViewer({
       const fieldType = getFieldType(field);
       const backgroundClass = getCellBackgroundClass(cellState.validation);
       const cellKey = `${rowIndex}-${field}`;
-      const isDropdownActive = activeDropdown === cellKey;
 
-      // Special handling for Ledare field with dropdown
+      // Special handling for Ledare field with personnel search
       if (field === "Ledare") {
-        const formatPersonnelName = (person: PersonnelRecord) =>
-          `${person.Förnamn || ""} ${person.Efternamn || ""}`.trim();
-
-        const validPersonnel = personnelList.filter(
-          (person) => formatPersonnelName(person) !== ""
-        );
-
         return (
-          <TooltipProvider key={cellKey}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div
-                  className={`relative h-8 ${backgroundClass}`}
-                  data-dropdown-container
-                >
-                  <div className="flex w-full h-full">
-                    <input
-                      type="text"
-                      value={cellState.value}
-                      onChange={(e) =>
-                        updateCell(rowIndex, field, e.target.value)
-                      }
-                      className="flex-1 h-full px-2 text-xs bg-transparent border-0 focus:outline-none focus:bg-blue-900/20 transition-colors"
-                      placeholder={field}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveDropdown(isDropdownActive ? null : cellKey);
-                      }}
-                      className="w-6 h-full flex items-center justify-center hover:bg-blue-900/20 transition-colors"
-                    >
-                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                    </button>
-                  </div>
-
-                  {/* Dropdown */}
-                  {isDropdownActive && (
-                    <div
-                      data-dropdown-container
-                      className="absolute z-50 top-full left-0 w-80 mt-1 bg-background border border-border rounded-md shadow-lg"
-                    >
-                      <div className="max-h-60 overflow-auto">
-                        {validPersonnel.length === 0 ? (
-                          <div className="p-3 text-center text-muted-foreground text-xs">
-                            Ingen personal tillgänglig
-                          </div>
-                        ) : (
-                          validPersonnel.map((person) => {
-                            const personName = formatPersonnelName(person);
-                            const isSelected = cellState.value === personName;
-
-                            return (
-                              <div
-                                key={person.id}
-                                className={`px-3 py-2 cursor-pointer transition-colors border-b border-border/50 last:border-0 hover:bg-muted/50 ${
-                                  isSelected ? "bg-muted" : ""
-                                }`}
-                                onClick={() => {
-                                  updateCell(rowIndex, field, personName);
-                                  setActiveDropdown(null);
-                                }}
-                              >
-                                <div className="flex items-center space-x-2">
-                                  <User className="h-3 w-3 text-foreground" />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="text-xs font-medium truncate">
-                                      {personName}
-                                    </div>
-                                    {person.Befattning && (
-                                      <div className="text-xs text-muted-foreground truncate">
-                                        {person.Befattning}
-                                      </div>
-                                    )}
-                                  </div>
-                                  {isSelected && (
-                                    <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <div className="space-y-1">
-                  <p className="font-medium">{field}</p>
-                  {cellState.validation.errors.map((error, idx) => (
-                    <p key={idx} className="text-red-400 text-xs">
-                      • {error.message}
-                    </p>
-                  ))}
-                  {cellState.validation.warnings.map((warning, idx) => (
-                    <p key={idx} className="text-amber-400 text-xs">
-                      • {warning.message}
-                    </p>
-                  ))}
-                  {cellState.validation.errors.length === 0 &&
-                    cellState.validation.warnings.length === 0 && (
-                      <p className="text-green-400 text-xs">Giltig data</p>
-                    )}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div key={cellKey} className={`relative h-8 ${backgroundClass}`}>
+            <PersonnelSearchInput
+              value={cellState.value}
+              onChange={(newValue) => updateCell(rowIndex, field, newValue)}
+              placeholder="Skriv för att söka personal..."
+              className="h-full px-2 text-xs bg-transparent border-0 focus:outline-none focus:bg-blue-900/20 transition-colors"
+              error={
+                cellState.validation.errors.length > 0
+                  ? cellState.validation.errors[0].message
+                  : cellState.validation.warnings.length > 0
+                  ? cellState.validation.warnings[0].message
+                  : undefined
+              }
+            />
+          </div>
         );
       }
 
@@ -293,14 +182,7 @@ export function CompensationExcelViewer({
         </TooltipProvider>
       );
     },
-    [
-      editableData,
-      updateCell,
-      getCellBackgroundClass,
-      activeDropdown,
-      setActiveDropdown,
-      personnelList,
-    ]
+    [editableData, updateCell, getCellBackgroundClass, personnelList]
   );
 
   const handleSave = async () => {
@@ -482,7 +364,7 @@ export function CompensationExcelViewer({
           <li>Röda celler innehåller fel som måste åtgärdas</li>
           <li>Gula celler innehåller varningar som bör granskas</li>
           <li>
-            För Ledare-fältet kan du klicka på pilen för att välja från
+            För Ledare-fältet kan du skriva för att söka och välja från
             personallistan
           </li>
           <li>
