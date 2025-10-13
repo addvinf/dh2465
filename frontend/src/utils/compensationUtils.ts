@@ -75,7 +75,10 @@ export function getCurrentPeriod(): CompensationPeriod {
 }
 
 export function calculateCompensationTotal(compensations: CompensationRecord[]): number {
-  return compensations.reduce((total, comp) => total + (comp["Total ersättning"] || 0), 0);
+  return compensations.reduce((total, comp) => {
+    const compTotal = comp["Total ersättning"] || ((comp.Antal || 0) * (comp.Ersättning || 0));
+    return total + compTotal;
+  }, 0);
 }
 
 export function validateCompensationRecord(record: Partial<CompensationRecord>): string[] {

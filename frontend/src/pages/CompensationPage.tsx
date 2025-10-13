@@ -33,7 +33,10 @@ import type {
 } from "../types/compensation";
 import type { PersonnelRecord } from "../types/personnel";
 import type { CostCenter } from "../types/settings";
-import { groupCompensationsByPerson } from "../utils/compensationUtils";
+import {
+  groupCompensationsByPerson,
+  calculateCompensationTotal,
+} from "../utils/compensationUtils";
 import {
   fetchCompensations,
   addCompensation,
@@ -304,12 +307,7 @@ export function LonerPage() {
                 {new Intl.NumberFormat("sv-SE", {
                   style: "currency",
                   currency: "SEK",
-                }).format(
-                  filteredCompensations.reduce(
-                    (sum, comp) => sum + (comp["Total ersättning"] || 0),
-                    0
-                  )
-                )}
+                }).format(calculateCompensationTotal(filteredCompensations))}
               </div>
               <p className="text-xs text-muted-foreground">
                 {selectedPeriodData.label}
