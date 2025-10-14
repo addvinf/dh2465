@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "../../ui/select";
 import { PersonnelSearchInput } from "../../personnel/PersonnelPopup/PersonnelSearchInput";
+import { CostCenterSearchInput } from "../../costcenter/CostCenterSearchInput";
 import { useSettings } from "../../../contexts/SettingsContext";
 
 interface CompensationFormFieldProps {
@@ -16,6 +17,7 @@ interface CompensationFormFieldProps {
     | "date"
     | "month-select"
     | "cost-center-select"
+    | "cost-center-search"
     | "personnel-select";
   value: string | number;
   onChange: (value: string | number) => void;
@@ -136,6 +138,16 @@ export function CompensationFormField({
           value={value as string}
           onChange={(val) => onChange(val)}
           placeholder={placeholder || "Skriv för att söka personal..."}
+          className={`${baseInputClasses} ${className}`}
+        />
+      );
+
+    case "cost-center-search":
+      return (
+        <CostCenterSearchInput
+          value={value as string}
+          onChange={(val) => onChange(val)}
+          placeholder={placeholder || "Skriv för att söka kostnadsställe..."}
           className={`${baseInputClasses} ${className}`}
         />
       );

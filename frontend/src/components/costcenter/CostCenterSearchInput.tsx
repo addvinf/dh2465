@@ -1,19 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Check, HelpCircle } from "lucide-react";
-import { Input } from "../../ui/input";
-import { cn } from "../../../lib/utils";
+import { Input } from "../ui/input";
+import { cn } from "../../lib/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../../ui/tooltip";
-import { PersonnelPopup } from "./PersonnelPopup";
-import { usePersonnelSearch } from "../../../hooks/usePersonnelSearch";
-import type { PersonnelSearchResult } from "../../../hooks/usePersonnelSearch";
+} from "../ui/tooltip";
+import { CostCenterPopup } from "./CostCenterPopup";
+import { useCostCenterSearch } from "../../hooks/useCostCenterSearch";
+import type { CostCenterSearchResult } from "../../hooks/useCostCenterSearch";
 
-interface PersonnelSearchInputProps {
+interface CostCenterSearchInputProps {
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
@@ -25,17 +25,17 @@ interface PersonnelSearchInputProps {
   autoFocus?: boolean;
 }
 
-export function PersonnelSearchInput({
+export function CostCenterSearchInput({
   value,
   onChange,
   onBlur,
-  placeholder = "Skriv för att söka personal...",
+  placeholder = "Skriv för att söka kostnadsställe...",
   className,
   disabled = false,
   error,
   organization,
   autoFocus = false,
-}: PersonnelSearchInputProps) {
+}: CostCenterSearchInputProps) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -50,12 +50,13 @@ export function PersonnelSearchInput({
   const {
     loading,
     error: loadError,
-    filterPersonnel,
-    findPersonByName,
+    filterCostCenters,
+    findCostCenterByText,
     getTopSuggestion,
-  } = usePersonnelSearch({ organization });
+    isValidCostCenter,
+  } = useCostCenterSearch({ organization });
 
-  const filteredPersonnel = filterPersonnel(searchTerm);
+  const filteredCostCenters = filterCostCenters(searchTerm);
 
   // Calculate popup position relative to input
   const calculatePopupPosition = useCallback(() => {
@@ -99,7 +100,7 @@ export function PersonnelSearchInput({
   const handleBlur = (e: React.FocusEvent) => {
     // Don't close if focus moved to popup
     const relatedTarget = e.relatedTarget as HTMLElement;
-    if (relatedTarget && relatedTarget.closest("[data-personnel-popup]")) {
+    if (relatedTarget && relatedTarget.closest("[data-costcenter-popup]")) {
       return;
     }
 
@@ -114,12 +115,12 @@ export function PersonnelSearchInput({
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isPopupOpen || filteredPersonnel.length === 0) {
+    if (!isPopupOpen || filteredCostCenters.length === 0) {
       if (e.key === "Enter" || e.key === "Tab") {
         // Try to auto-complete with top suggestion
         const topSuggestion = getTopSuggestion(value);
         if (topSuggestion) {
-          handlePersonSelect(topSuggestion);
+          handleCostCenterSelect(topSuggestion);
         }
       }
       return;
@@ -129,14 +130,14 @@ export function PersonnelSearchInput({
       case "ArrowDown":
         e.preventDefault();
         setHighlightedIndex((prev) =>
-          prev < filteredPersonnel.length - 1 ? prev + 1 : 0
+          prev < filteredCostCenters.length - 1 ? prev + 1 : 0
         );
         break;
 
       case "ArrowUp":
         e.preventDefault();
         setHighlightedIndex((prev) =>
-          prev > 0 ? prev - 1 : filteredPersonnel.length - 1
+          prev > 0 ? prev - 1 : filteredCostCenters.length - 1
         );
         break;
 
@@ -144,9 +145,9 @@ export function PersonnelSearchInput({
       case "Tab":
         e.preventDefault();
         if (highlightedIndex >= 0) {
-          handlePersonSelect(filteredPersonnel[highlightedIndex]);
-        } else if (filteredPersonnel.length > 0) {
-          handlePersonSelect(filteredPersonnel[0]);
+          handleCostCenterSelect(filteredCostCenters[highlightedIndex]);
+        } else if (filteredCostCenters.length > 0) {
+          handleCostCenterSelect(filteredCostCenters[0]);
         }
         break;
 
@@ -159,9 +160,9 @@ export function PersonnelSearchInput({
     }
   };
 
-  // Handle person selection
-  const handlePersonSelect = (person: PersonnelSearchResult) => {
-    onChange(person.name);
+  // Handle cost center selection
+  const handleCostCenterSelect = (costCenter: CostCenterSearchResult) => {
+    onChange(costCenter.displayText);
     setIsPopupOpen(false);
     setSearchTerm("");
     setHighlightedIndex(-1);
@@ -185,9 +186,9 @@ export function PersonnelSearchInput({
   }, [isPopupOpen, calculatePopupPosition]);
 
   // Validate current value
-  const currentPerson = findPersonByName(value);
-  const isValidPerson = !value || currentPerson !== null;
-  const showError = error || loadError || (!isValidPerson && value.trim());
+  const currentCostCenter = findCostCenterByText(value);
+  const isValid = isValidCostCenter(value);
+  const showError = error || loadError || (!isValid && value.trim());
 
   return (
     <TooltipProvider>
@@ -208,14 +209,14 @@ export function PersonnelSearchInput({
               className={cn(
                 className,
                 showError && "border-destructive focus:border-destructive",
-                !isValidPerson && value.trim() && "bg-destructive/5"
+                !isValid && value.trim() && "bg-destructive/5"
               )}
             />
 
             {/* Validation indicator */}
             {value && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                {currentPerson ? (
+                {currentCostCenter ? (
                   <Check className="w-3 h-3 text-green-500" />
                 ) : (
                   <HelpCircle className="w-3 h-3 text-yellow-500" />
@@ -231,7 +232,9 @@ export function PersonnelSearchInput({
             <div className="space-y-1">
               <p className="font-medium">Validering</p>
               <p className="text-red-400 text-xs">
-                {error || loadError || "Person finns inte i personallistan"}
+                {error ||
+                  loadError ||
+                  "Kostnadsställe finns inte i inställningarna"}
               </p>
             </div>
           </TooltipContent>
@@ -241,16 +244,16 @@ export function PersonnelSearchInput({
       {/* Popup portal */}
       {isPopupOpen &&
         createPortal(
-          <PersonnelPopup
+          <CostCenterPopup
             isOpen={isPopupOpen}
             searchTerm={searchTerm}
-            filteredPersonnel={filteredPersonnel}
-            selectedPersonName={value}
+            filteredCostCenters={filteredCostCenters}
+            selectedCostCenterText={value}
             highlightedIndex={highlightedIndex}
             loading={loading}
             error={loadError || undefined}
             position={popupPosition}
-            onPersonSelect={handlePersonSelect}
+            onCostCenterSelect={handleCostCenterSelect}
             onClose={handlePopupClose}
           />,
           document.body

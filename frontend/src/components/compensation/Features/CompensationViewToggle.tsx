@@ -14,7 +14,7 @@ export function CompensationViewToggle({
   return (
     <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
       <Button
-        variant={viewMode === "person" ? "default" : "ghost"}
+        variant={viewMode === "person" ? "outline" : "ghost"}
         size="sm"
         onClick={() => onViewModeChange("person")}
         className="flex items-center space-x-2"
@@ -23,7 +23,7 @@ export function CompensationViewToggle({
         <span>Per person</span>
       </Button>
       <Button
-        variant={viewMode === "compensation" ? "default" : "ghost"}
+        variant={viewMode === "compensation" ? "outline" : "ghost"}
         size="sm"
         onClick={() => onViewModeChange("compensation")}
         className="flex items-center space-x-2"

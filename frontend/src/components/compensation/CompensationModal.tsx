@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { CostCenterSearchInput } from "../costcenter/CostCenterSearchInput";
 import { useSettings } from "../../contexts/SettingsContext";
 import type { CompensationRecord } from "../../types/compensation";
 
@@ -241,25 +242,13 @@ export function CompensationModal({
               <label className="block text-sm font-medium mb-2">
                 Kostnadsställe <span className="text-red-500">*</span>
               </label>
-              <Select
+              <CostCenterSearchInput
                 value={formData.Kostnadsställe}
-                onValueChange={(value) =>
+                onChange={(value) =>
                   setFormData({ ...formData, Kostnadsställe: value })
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Välj kostnadsställe" />
-                </SelectTrigger>
-                <SelectContent>
-                  {settings.costCenters
-                    .filter((cc) => cc.name && cc.name.trim() !== "")
-                    .map((cc) => (
-                      <SelectItem key={cc.id} value={cc.name}>
-                        {cc.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+                placeholder="Skriv för att söka kostnadsställe..."
+              />
             </div>
           </div>
 

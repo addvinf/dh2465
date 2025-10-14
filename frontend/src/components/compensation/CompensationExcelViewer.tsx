@@ -16,6 +16,7 @@ import {
   TooltipTrigger,
 } from "../ui/tooltip";
 import { PersonnelSearchInput } from "../personnel/PersonnelPopup/PersonnelSearchInput";
+import { CostCenterSearchInput } from "../costcenter/CostCenterSearchInput";
 import type { CompensationRecord } from "../../types/compensation";
 import type { PersonnelRecord } from "../../types/personnel";
 import {
@@ -130,6 +131,27 @@ export function CompensationExcelViewer({
               value={cellState.value}
               onChange={(newValue) => updateCell(rowIndex, field, newValue)}
               placeholder="Skriv för att söka personal..."
+              className="h-full px-2 text-xs bg-transparent border-0 focus:outline-none focus:bg-blue-900/20 transition-colors"
+              error={
+                cellState.validation.errors.length > 0
+                  ? cellState.validation.errors[0].message
+                  : cellState.validation.warnings.length > 0
+                  ? cellState.validation.warnings[0].message
+                  : undefined
+              }
+            />
+          </div>
+        );
+      }
+
+      // Special handling for Kostnadsställe field with cost center search
+      if (field === "Kostnadsställe") {
+        return (
+          <div key={cellKey} className={`relative h-8 ${backgroundClass}`}>
+            <CostCenterSearchInput
+              value={cellState.value}
+              onChange={(newValue) => updateCell(rowIndex, field, newValue)}
+              placeholder="Skriv för att söka kostnadsställe..."
               className="h-full px-2 text-xs bg-transparent border-0 focus:outline-none focus:bg-blue-900/20 transition-colors"
               error={
                 cellState.validation.errors.length > 0
@@ -366,6 +388,10 @@ export function CompensationExcelViewer({
           <li>
             För Ledare-fältet kan du skriva för att söka och välja från
             personallistan
+          </li>
+          <li>
+            För Kostnadsställe-fältet kan du skriva för att söka och välja från
+            konfigurerade kostnadsställen
           </li>
           <li>
             Hovra över celler för att se detaljerad valideringsinformation

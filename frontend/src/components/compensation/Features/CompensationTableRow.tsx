@@ -79,7 +79,7 @@ export function CompensationTableRow({
         </TableCell>
         <TableCell className="py-2 p-1">
           <CompensationFormField
-            type="cost-center-select"
+            type="cost-center-search"
             value={formData.Kostnadsställe}
             onChange={(value) => updateFormField("Kostnadsställe", value)}
           />

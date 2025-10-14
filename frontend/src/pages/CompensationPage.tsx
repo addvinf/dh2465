@@ -296,7 +296,7 @@ export function LonerPage() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+          <Card className="border-0 shadow-none">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Totala ersättningar
@@ -315,7 +315,7 @@ export function LonerPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-none">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Antal ersättningar
@@ -331,7 +331,7 @@ export function LonerPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-none">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Antal personer
