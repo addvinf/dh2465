@@ -1,10 +1,43 @@
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+const getAuthToken = async (): Promise<string | null> => {
+  try {
+    // Try to get token from secure storage first
+    const { SecureTokenStorage } = await import('../utils/secureTokenStorage');
+    const token = await SecureTokenStorage.getAccessToken();
+    
+    if (token) {
+      return token;
+    }
+
+    // Fallback to development token storage
+    const fallbackToken = SecureTokenStorage.getFallbackAccessToken();
+    if (fallbackToken) {
+      return fallbackToken;
+    }
+
+    // Last resort: check old localStorage (for migration)
+    const session = localStorage.getItem('authSession');
+    if (session) {
+      try {
+        const sessionData = JSON.parse(session);
+        return sessionData.access_token;
+      } catch (error) {
+        console.error('Error parsing session:', error);
+        return null;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+    return null;
+  }
+};
 
 class ApiService {
-  private getAuthHeaders() {
-    const session = localStorage.getItem('authSession');
-    const token = session ? JSON.parse(session).access_token : null;
-    
+  private async getAuthHeaders() {
+    const token = await getAuthToken();
     return {
       'Content-Type': 'application/json',
       ...(token && { 'Authorization': `Bearer ${token}` }),
@@ -14,7 +47,8 @@ class ApiService {
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     const config: RequestInit = {
-      headers: this.getAuthHeaders(),
+      credentials: 'include', // Include httpOnly cookies
+      headers: await this.getAuthHeaders(),
       ...options,
     };
 

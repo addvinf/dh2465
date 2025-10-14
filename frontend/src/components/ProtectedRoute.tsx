@@ -7,8 +7,7 @@ interface ProtectedRouteProps {
   requiredRole?: string[];
 }
 
-// Read DISABLE_AUTH from environment (must be prefixed with VITE_ in frontend)
-const DISABLE_AUTH = import.meta.env.VITE_DISABLE_AUTH === 'true';
+// Authentication always enforced on frontend - backend controls actual security
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
@@ -17,11 +16,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
 
-  // Skip authentication if disabled in development
-  if (DISABLE_AUTH) {
-    console.log('Frontend auth disabled - allowing access');
-    return <>{children}</>;
-  }
+  // Frontend always requires authentication
+  // Backend will handle development bypasses securely
 
   if (isLoading) {
     return (

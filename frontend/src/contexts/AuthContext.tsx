@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService, type AuthUser, type AuthSession } from '../services/authService';
+import { SecureTokenStorage } from '../utils/secureTokenStorage';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -13,8 +14,8 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-// Read DISABLE_AUTH from environment (must be prefixed with VITE_ in frontend)
-const DISABLE_AUTH = import.meta.env.VITE_DISABLE_AUTH === 'true';
+// Note: Auth bypass only controlled by backend for security
+// Frontend always enforces authentication - backend determines if it's actually required
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -36,47 +37,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // If auth is disabled, set up mock user and session
-    if (DISABLE_AUTH) {
-      console.log('Frontend auth disabled - setting up mock user');
-      setUser({ 
-        id: 'dev-user', 
-        email: 'dev@example.com', 
-        role: 'admin' 
-      });
-      setSession({
-        access_token: 'dev-token',
-        refresh_token: 'dev-refresh-token',
-        expires_at: Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
-      });
-      setIsLoading(false);
-      return;
-    }
+    const initializeAuth = async () => {
+      // Frontend always enforces authentication
+      // Backend DISABLE_AUTH will return mock responses if needed
 
-    // Check for stored session on app start
-    const storedSession = localStorage.getItem('authSession');
-    if (storedSession) {
-      try {
-        const parsedSession = JSON.parse(storedSession);
-        // Check if token is expired
-        if (isTokenExpired(parsedSession)) {
-          console.log('Token expired, clearing auth');
-          clearAuth();
-          setIsLoading(false);
-          return;
+      // Check for existing secure session
+      const sessionInfo = SecureTokenStorage.getSessionInfo();
+      if (sessionInfo?.isAuthenticated) {
+        try {
+          // Try to get access token and then fetch user profile
+          const accessToken = await SecureTokenStorage.getAccessToken();
+          if (accessToken) {
+            const profileData = await authService.fetchProfile(accessToken);
+            setUser(profileData.user);
+            
+            // Create session object from stored info
+            const sessionData: AuthSession = {
+              access_token: '', // Token is in httpOnly cookie
+              refresh_token: '', // Token is in httpOnly cookie
+              expires_at: sessionInfo.expires_at
+            };
+            setSession(sessionData);
+          } else {
+            // No token available, clear session
+            await SecureTokenStorage.clearSession();
+          }
+        } catch (error) {
+          console.error('Error loading stored session:', error);
+          // Clear invalid session
+          await SecureTokenStorage.clearSession();
         }
-        setSession(parsedSession);
-        fetchUserProfile(parsedSession.access_token).catch(error => {
-          console.error('Failed to fetch user profile on init:', error);
-        });
-      } catch (error) {
-        console.error('Error parsing stored session:', error);
-        clearAuth();
-        setIsLoading(false);
       }
-    } else {
       setIsLoading(false);
-    }
+    };
+
+    initializeAuth();
   }, []);
 
   // Session monitoring and token refresh
@@ -161,21 +156,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const fetchUserProfile = async (token: string) => {
-    try {
-      const data = await authService.fetchProfile(token);
-      setUser(data.user);
-    } catch (error) {
-      console.error('Failed to fetch user profile:', error);
-      clearAuth();
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const clearAuth = () => {
+  const clearAuth = async () => {
     setUser(null);
     setSession(null);
+    
+    // Clear secure token storage
+    await SecureTokenStorage.clearSession();
+    
+    // Also clear old localStorage for backwards compatibility
     localStorage.removeItem('authSession');
   };
 
@@ -185,7 +173,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await authService.login({ email, password });
       setSession(data.session);
       setUser(data.user);
-      localStorage.setItem('authSession', JSON.stringify(data.session));
+      
+      // Store session securely
+      SecureTokenStorage.storeSession({
+        ...data.session,
+        user: data.user
+      });
     } finally {
       setIsLoading(false);
     }
@@ -235,7 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      clearAuth();
+      await clearAuth();
     }
   };
 
