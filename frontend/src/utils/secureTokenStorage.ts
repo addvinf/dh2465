@@ -64,7 +64,7 @@ export class SecureTokenStorage {
    */
   static async getAccessToken(): Promise<string | null> {
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const apiUrl = 'http://localhost:3000';
       const response = await fetch(`${apiUrl}/auth/token`, {
         method: 'GET',
         credentials: 'include', // Include httpOnly cookies
@@ -87,7 +87,7 @@ export class SecureTokenStorage {
    */
   private static async setSecureTokens(accessToken: string, refreshToken: string): Promise<void> {
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const apiUrl = 'http://localhost:3000';
       await fetch(`${apiUrl}/auth/set-tokens`, {
         method: 'POST',
         headers: {
@@ -116,7 +116,7 @@ export class SecureTokenStorage {
   static async clearSession(): Promise<void> {
     // Clear httpOnly cookies via backend
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const apiUrl = 'http://localhost:3000';
       await fetch(`${apiUrl}/auth/clear-tokens`, {
         method: 'POST',
         credentials: 'include',
@@ -146,7 +146,7 @@ export class SecureTokenStorage {
    */
   static async refreshToken(): Promise<boolean> {
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const apiUrl = 'http://localhost:3000';
       const response = await fetch(`${apiUrl}/auth/refresh`, {
         method: 'POST',
         credentials: 'include', // Include httpOnly cookies with refresh token
