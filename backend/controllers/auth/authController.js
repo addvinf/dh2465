@@ -63,6 +63,21 @@ export class AuthController {
    */
   static async login(req, res) {
     if (process.env.DISABLE_AUTH === 'true') {
+      // Set mock cookies for development
+      res.cookie('auth_access_token', 'dev-access-token', {
+        httpOnly: true,
+        secure: false, // Allow HTTP in development
+        sameSite: 'lax',
+        maxAge: 3600000 // 1 hour
+      });
+
+      res.cookie('auth_refresh_token', 'dev-refresh-token', {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax', 
+        maxAge: 7 * 24 * 3600000 // 7 days
+      });
+
       return res.json({
         message: 'Auth disabled - mock login successful',
         user: { 
@@ -77,6 +92,33 @@ export class AuthController {
     try {
       const { email, password } = req.body;
       const result = await AuthService.loginUser(email, password);
+
+      // Set httpOnly cookies for secure authentication
+      const { access_token, refresh_token, expires_at } = result.session;
+      
+      // Calculate maxAge safely
+      let accessTokenMaxAge = 3600000; // Default 1 hour
+      if (expires_at && typeof expires_at === 'number') {
+        const timeUntilExpiry = (expires_at - Date.now() / 1000) * 1000;
+        if (timeUntilExpiry > 0) {
+          accessTokenMaxAge = timeUntilExpiry;
+        }
+      }
+
+      // Set secure httpOnly cookies
+      res.cookie('auth_access_token', access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: accessTokenMaxAge
+      });
+
+      res.cookie('auth_refresh_token', refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 3600000 // 7 days
+      });
 
       return res.json({
         message: 'Login successful',

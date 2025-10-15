@@ -48,7 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Try to get access token and then fetch user profile
           const accessToken = await SecureTokenStorage.getAccessToken();
           if (accessToken) {
-            const profileData = await authService.fetchProfile(accessToken);
+            const profileData = await authService.fetchProfile();
             setUser(profileData.user);
             
             // Create session object from stored info
