@@ -4,13 +4,6 @@ import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '../components/ui/select';
 import { useAuthForm } from '../hooks/useAuthForm';
 import { validateRegisterForm } from '../utils/authValidation';
 import { PasswordInput } from '../components/PasswordInput';
@@ -18,7 +11,6 @@ import { usePasswordForm } from '../hooks/usePasswordForm';
 
 export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('admin'); // Default to admin as per previous requirement
   const [emailError, setEmailError] = useState<string>('');
   const { register, isSubmitting, checkEmailExists, isCheckingEmail, getFieldError } = useAuthForm();
 
@@ -68,7 +60,7 @@ export const RegisterPage: React.FC = () => {
       throw new Error('Form validation failed');
     }
 
-    await register({ email, password, confirmPassword, role }, '/login');
+    await register({ email, password, confirmPassword, role: 'user' }, '/login');
   };
 
   const {
@@ -143,19 +135,6 @@ export const RegisterPage: React.FC = () => {
               autoComplete="new-password"
               required
             />
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select value={role} onValueChange={setRole}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Administrator</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             {getFieldError('general') && (
               <div className="text-sm text-destructive bg-destructive/10 p-3 rounded">
                 {getFieldError('general')}

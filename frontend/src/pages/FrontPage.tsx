@@ -14,11 +14,6 @@ const FrontPage: React.FC = () => {
   const [isFortnoxAuthorized, setIsFortnoxAuthorized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Helper function to check if user has admin or manager role
-  const hasAdminAccess = () => {
-    return user?.role === 'admin' || user?.role === 'manager';
-  };
-
   useEffect(() => {
     // Check for auth callback parameters
     const authStatus = searchParams.get('auth');
@@ -135,15 +130,13 @@ const FrontPage: React.FC = () => {
           )}
         </div>
 
-        <p className="text-xl mb-4">Slask pages:</p>
-        {hasAdminAccess() && (
-          <Button
-            className="px-10 py-4 text-lg"
-            onClick={() => navigate("/admin")}
-          >
-            Admin Page
-          </Button>
-        )}
+        <p className="text-xl mb-4">Demo pages:</p>
+        <Button
+          className="px-10 py-4 text-lg"
+          onClick={() => navigate("/admin")}
+        >
+          Admin Page
+        </Button>
         <Button
           className="px-10 py-4 text-lg mt-4"
           onClick={() => navigate("/404")}

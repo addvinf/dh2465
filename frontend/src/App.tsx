@@ -39,33 +39,35 @@ const App = () => (
                 <Route path="/update-password" element={<UpdatePasswordPage />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 {/* Protected routes */}
+                {/* Front page - admin only access */}
                 <Route path="/" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute adminOnly={true}>
                     <FrontPage />
                   </ProtectedRoute>
                 } />
+                {/* Admin-only routes */}
                 <Route path="/admin" element={
-                  <ProtectedRoute requiredRole={['admin', 'manager']}>
+                  <ProtectedRoute adminOnly={true}>
                     <AdminPage />
                   </ProtectedRoute>
                 } />
                 <Route path="/personal" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute adminOnly={true}>
                     <PersonnelSection />
                   </ProtectedRoute>
                 } />
                 <Route path="/kompensation" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute adminOnly={true}>
                     <KompensationPage />
                   </ProtectedRoute>
                 } />
                 <Route path="/monthly" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute adminOnly={true}>
                     <MontlyRetainerPage />
                   </ProtectedRoute>
                 } />
                 <Route path="/settings" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute adminOnly={true}>
                     <SettingsSection />
                   </ProtectedRoute>
                 } />

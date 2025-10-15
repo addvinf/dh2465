@@ -86,13 +86,15 @@ app.use(express.json());
 // Public routes
 app.use("/", helloWorldRouter);
 app.use("/auth", authRouter);
-app.use("/fortnox-auth", fortnoxAuthRouter);
 
-// Protected routes - require authentication
-app.use("/supabase-example", authenticateToken, supabaseExampleRouter);
-app.use("/api", authenticateToken, orgDataRouter);
-app.use("/api", authenticateToken, settingsRouter);
-app.use("/fortnox-employees", authenticateToken, requireRole(['admin', 'manager']), fortnoxEmployeesRouter);
+// Fortnox auth routes - require authentication and admin role
+app.use("/fortnox-auth", authenticateToken, requireRole(['admin']), fortnoxAuthRouter);
+
+// Protected routes - require authentication and admin role
+app.use("/supabase-example", authenticateToken, requireRole(['admin']), supabaseExampleRouter);
+app.use("/api", authenticateToken, requireRole(['admin']), orgDataRouter);
+app.use("/api", authenticateToken, requireRole(['admin']), settingsRouter);
+app.use("/fortnox-employees", authenticateToken, requireRole(['admin']), fortnoxEmployeesRouter);
 
 // Simple config status endpoint
 app.get("/supabase/health", (req, res) => {

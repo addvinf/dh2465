@@ -184,7 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (email: string, password: string, role: string = 'admin') => {
+  const register = async (email: string, password: string, role: string = 'user') => {
     setIsLoading(true);
     try {
       const data = await authService.register({ email, password, role });
@@ -203,7 +203,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const registerOnly = async (email: string, password: string, role: string = 'admin') => {
+  const registerOnly = async (email: string, password: string, role: string = 'user') => {
     setIsLoading(true);
     try {
       const data = await authService.register({ email, password, role });
