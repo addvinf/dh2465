@@ -7,6 +7,7 @@ export const orgTableSchemas = {
     { name: 'Upplagd av', type: 'TEXT' },
     { name: 'Avser Mån/år', type: 'TEXT' },
     { name: 'Ledare', type: 'TEXT' },
+    { name: 'employee_id', type: 'TEXT' },
     { name: 'Kostnadsställe', type: 'TEXT' },
     { name: 'Aktivitetstyp', type: 'TEXT' },
     { name: 'Antal', type: 'TEXT' },

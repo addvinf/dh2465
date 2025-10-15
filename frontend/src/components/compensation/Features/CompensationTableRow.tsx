@@ -86,9 +86,10 @@ export function CompensationTableRow({
         </TableCell>
         <TableCell className="py-2 p-1">
           <CompensationFormField
-            type="text"
+            type="activity-type-search"
             value={formData.Aktivitetstyp}
             onChange={(value) => updateFormField("Aktivitetstyp", value)}
+            useTooltip={true}
           />
         </TableCell>
         <TableCell className="py-2 p-1">
