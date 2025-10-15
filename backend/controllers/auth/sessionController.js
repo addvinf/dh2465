@@ -25,7 +25,7 @@ export class SessionController {
 
     try {
       const { refresh_token } = req.body;
-      const result = await AuthService.refreshToken(refresh_token);
+      const result = await AuthService.refreshSession(refresh_token);
       
       return res.json({
         message: 'Token refreshed successfully',

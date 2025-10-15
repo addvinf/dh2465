@@ -117,7 +117,7 @@ export class AuthController {
     }
 
     try {
-      const result = await AuthService.logoutUser(req.session);
+      const result = await AuthService.signOut();
       
       return res.json({
         message: 'Logout successful'
@@ -146,7 +146,7 @@ export class AuthController {
 
     try {
       const { email } = req.body;
-      await AuthService.requestPasswordReset(email);
+      await AuthService.resetPassword(email);
       
       return res.json({
         message: 'Password reset email sent'
@@ -172,10 +172,9 @@ export class AuthController {
     }
 
     try {
-      const { currentPassword, newPassword } = req.body;
-      const userId = req.user.id;
+      const { password, access_token, refresh_token } = req.body;
       
-      await AuthService.updatePassword(userId, currentPassword, newPassword);
+      await AuthService.updatePassword(password, access_token, refresh_token);
       
       return res.json({
         message: 'Password updated successfully'
@@ -210,7 +209,7 @@ export class AuthController {
 
     try {
       const { email } = req.body;
-      await AuthService.resendVerificationEmail(email);
+      await AuthService.resendVerification(email);
       
       return res.json({
         message: 'Verification email sent'
