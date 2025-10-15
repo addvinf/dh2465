@@ -59,7 +59,6 @@ export function LonerPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("all");
   const [personnelList, setPersonnelList] = useState<PersonnelRecord[]>([]);
   const [, setCostCenters] = useState<CostCenter[]>([]);
-  const [, setActivityTypes] = useState<string[]>([]);
   const [batchErrors, setBatchErrors] = useState<any[]>([]);
 
   // Modal state
@@ -129,22 +128,10 @@ export function LonerPage() {
     try {
       const settings = await settingsService.fetchSettings(org);
       setCostCenters(settings.costCenters || []);
-
-      // Set some default activity types if none configured
-      const defaultActivityTypes = [
-        "Tävling",
-        "Träning",
-        "Administration",
-        "Evenemang",
-        "Utbildning",
-        "Möte",
-      ];
-      setActivityTypes(defaultActivityTypes);
     } catch (err) {
       console.error("Failed to load settings:", err);
       // Set defaults on error
       setCostCenters([]);
-      setActivityTypes([]);
     }
   };
 
