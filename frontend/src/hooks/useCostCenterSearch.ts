@@ -58,6 +58,24 @@ export function useCostCenterSearch(_props: UseCostCenterSearchProps = {}) {
     ) || null;
   };
 
+  // Find cost center by code
+  const findCostCenterByCode = (code: string): CostCenterSearchResult | null => {
+    if (!code) return null;
+    return costCenters.find((center) => center.code === code) || null;
+  };
+
+  // Get code from display text
+  const getCodeFromDisplayText = (displayText: string): string => {
+    const costCenter = findCostCenterByText(displayText);
+    return costCenter?.code || displayText;
+  };
+
+  // Get display text from code
+  const getDisplayTextFromCode = (code: string): string => {
+    const costCenter = findCostCenterByCode(code);
+    return costCenter?.displayText || code;
+  };
+
   // Get top suggestion for auto-complete
   const getTopSuggestion = (searchTerm: string): CostCenterSearchResult | null => {
     if (!searchTerm.trim()) return null;
@@ -78,7 +96,10 @@ export function useCostCenterSearch(_props: UseCostCenterSearchProps = {}) {
     error: error as string | null,
     filterCostCenters,
     findCostCenterByText,
+    findCostCenterByCode,
     getTopSuggestion,
     isValidCostCenter,
+    getCodeFromDisplayText,
+    getDisplayTextFromCode,
   };
 }

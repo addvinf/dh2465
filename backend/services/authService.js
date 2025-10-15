@@ -344,4 +344,6 @@ export class AuthService {
       throw new Error(`Failed to get user: ${error.message}`);
     }
   }
+
+  
 }

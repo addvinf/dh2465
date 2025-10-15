@@ -99,10 +99,11 @@ export function CompensationAddRow({
       </TableCell>
       <TableCell className="py-2 p-1">
         <CompensationFormField
-          type="text"
+          type="activity-type-search"
           value={formData.Aktivitetstyp}
           onChange={(value) => updateFormField("Aktivitetstyp", value)}
           placeholder="Aktivitetstyp"
+          useTooltip={true}
         />
       </TableCell>
       <TableCell className="py-2 p-1">

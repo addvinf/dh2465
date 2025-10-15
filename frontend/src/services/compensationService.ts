@@ -1,6 +1,22 @@
 // src/services/compensationService.ts
 import { apiService } from "./apiService";
 import type { CompensationRecord, CompensationFormData } from "../types/compensation";
+import type { PersonnelRecord } from "../types/personnel";
+
+/**
+ * Helper to find employee ID from personnel list by name
+ */
+export function findEmployeeIdByName(personnelList: PersonnelRecord[], ledareNamn: string): string | null {
+  const fullName = ledareNamn.trim();
+  if (!fullName) return null;
+  
+  const person = personnelList.find(p => {
+    const personFullName = `${p.Förnamn || ''} ${p.Efternamn || ''}`.trim();
+    return personFullName === fullName;
+  });
+  
+  return person?.fortnox_employee_id || null;
+}
 
 /** Normalizes API errors into a readable message */
 function toErrorMessage(err: unknown, fallback = "Ett oväntat fel inträffade"): string {
@@ -33,7 +49,8 @@ export async function fetchCompensations(
 
 export async function addCompensation(
   org: string,
-  compensation: CompensationFormData
+  compensation: CompensationFormData,
+  personnelList?: PersonnelRecord[]
 ): Promise<CompensationRecord> {
   try {
     // Calculate derived fields on the client to keep UI consistent
@@ -41,6 +58,10 @@ export async function addCompensation(
       ...compensation,
       "Total ersättning": compensation.Antal * compensation.Ersättning,
       "Fortnox status": "pending" as const,
+      // Auto-populate employee_id if not provided and personnel list available
+      "employee_id": compensation.employee_id || 
+        (personnelList ? findEmployeeIdByName(personnelList, compensation.Ledare) : null) || 
+        "",
     };
 
     await apiService.post(
@@ -58,10 +79,11 @@ export async function addCompensation(
 export async function updateCompensation(
   org: string,
   id: string,
-  compensation: Partial<CompensationFormData>
+  compensation: Partial<CompensationFormData>,
+  personnelList?: PersonnelRecord[]
 ): Promise<CompensationRecord> {
   try {
-    const updates: Partial<CompensationFormData & { "Total ersättning": number }> = { ...compensation };
+    const updates: Partial<CompensationFormData & { "Total ersättning": number; "employee_id": string }> = { ...compensation };
 
     // Recalculate total if both parts present; if only one present, leave server to recalc
     if (
@@ -69,6 +91,11 @@ export async function updateCompensation(
       typeof updates.Ersättning === "number"
     ) {
       updates["Total ersättning"] = updates.Antal * updates.Ersättning;
+    }
+
+    // Update employee_id if Ledare changed and personnel list available
+    if (updates.Ledare && personnelList) {
+      updates["employee_id"] = findEmployeeIdByName(personnelList, updates.Ledare) || "";
     }
 
     await apiService.patch(

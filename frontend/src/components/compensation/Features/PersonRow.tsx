@@ -41,16 +41,9 @@ export function PersonRow({
     return antal * ersattning;
   };
 
-  const handleEditCompensation = async (
-    id: string,
-    updates: Partial<CompensationRecord>
-  ) => {
-    // Find the compensation and create the updated version
-    const compensation = personComp.compensations.find((c) => c.id === id);
-    if (compensation) {
-      const updatedCompensation = { ...compensation, ...updates };
-      await onEditCompensation(updatedCompensation);
-    }
+  const handleEditCompensation = (compensation: CompensationRecord) => {
+    // Pass the compensation directly to the parent's edit handler
+    onEditCompensation(compensation);
   };
 
   return (

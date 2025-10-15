@@ -17,6 +17,10 @@ import {
 } from "../ui/tooltip";
 import { PersonnelSearchInput } from "../personnel/PersonnelPopup/PersonnelSearchInput";
 import { CostCenterSearchInput } from "../costcenter/CostCenterSearchInput";
+import { ActivityTypeSearchInput } from "../activitytype/ActivityTypeSearchInput";
+import { useCostCenterSearch } from "../../hooks/useCostCenterSearch";
+import { useActivityTypeSearch } from "../../hooks/useActivityTypeSearch";
+import { findEmployeeIdByName } from "../../services/compensationService";
 import type { CompensationRecord } from "../../types/compensation";
 import type { PersonnelRecord } from "../../types/personnel";
 import {
@@ -48,6 +52,8 @@ export function CompensationExcelViewer({
   onCancel,
   loading = false,
 }: CompensationExcelViewerProps) {
+  const { getCodeFromDisplayText: getCostCenterCode } = useCostCenterSearch();
+  const { getAccountFromDisplayText: getActivityAccount } = useActivityTypeSearch();
   const [editableData, setEditableData] = useState<
     Record<string, Record<string, CellState>>
   >({});
@@ -165,6 +171,29 @@ export function CompensationExcelViewer({
         );
       }
 
+      // Special handling for Aktivitetstyp field with activity type search
+      if (field === "Aktivitetstyp") {
+        return (
+          <div key={cellKey} className={`relative h-8 ${backgroundClass}`}>
+            <ActivityTypeSearchInput
+              value={cellState.value}
+              onChange={(newValue) => updateCell(rowIndex, field, newValue)}
+              placeholder="Skriv för att söka aktivitetstyp..."
+              className="h-full px-2 text-xs bg-transparent border-0 focus:outline-none focus:bg-blue-900/20 transition-colors"
+              hideError={true}
+              useTooltip={true}
+              error={
+                cellState.validation.errors.length > 0
+                  ? cellState.validation.errors[0].message
+                  : cellState.validation.warnings.length > 0
+                  ? cellState.validation.warnings[0].message
+                  : undefined
+              }
+            />
+          </div>
+        );
+      }
+
       // Default text input for other fields
       return (
         <TooltipProvider key={cellKey}>
@@ -219,8 +248,22 @@ export function CompensationExcelViewer({
         const rowState = editableData[parseInt(rowIndex)];
 
         Object.entries(rowState).forEach(([field, cellState]) => {
-          rowData[field as keyof CompensationRecord] = cellState.value as any;
+          const value = cellState.value;
+          
+          // Convert display text to codes/accounts for storage
+          if (field === "Kostnadsställe") {
+            rowData[field as keyof CompensationRecord] = getCostCenterCode(value) as any;
+          } else if (field === "Aktivitetstyp") {
+            rowData[field as keyof CompensationRecord] = getActivityAccount(value) as any;
+          } else {
+            rowData[field as keyof CompensationRecord] = value as any;
+          }
         });
+
+        // Auto-populate employee_id based on Ledare
+        if (rowData.Ledare) {
+          rowData.employee_id = findEmployeeIdByName(personnelList, rowData.Ledare as string) || "";
+        }
 
         return rowData;
       });

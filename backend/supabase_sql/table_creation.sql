@@ -18,15 +18,15 @@ $$;
 -- COMPENSATIONS
 CREATE OR REPLACE FUNCTION schema_compensations_cols()
 RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS $$
-  SELECT ARRAY['Upplagd av', 'Avser Mån/år', 'Ledare', 'Kostnadsställe', 'Aktivitetstyp', 'Antal', 'Ersättning', 'Eventuell kommentar', 'Datum utbet']::TEXT[];
+  SELECT ARRAY['Upplagd av', 'Avser Mån/år', 'Ledare', 'employee_id', 'Kostnadsställe', 'Aktivitetstyp', 'Antal', 'Ersättning', 'Eventuell kommentar', 'Datum utbet']::TEXT[];
 $$;
 CREATE OR REPLACE FUNCTION schema_compensations_types()
 RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS $$
-  SELECT ARRAY['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT']::TEXT[];
+  SELECT ARRAY['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT']::TEXT[];
 $$;
 CREATE OR REPLACE FUNCTION schema_compensations_defaults()
 RETURNS TEXT[] LANGUAGE SQL IMMUTABLE AS $$
-  SELECT ARRAY[NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL]::TEXT[];
+  SELECT ARRAY[NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL]::TEXT[];
 $$;
 -- MONTHLY RETAINER
 CREATE OR REPLACE FUNCTION schema_monthly_retainer_cols()

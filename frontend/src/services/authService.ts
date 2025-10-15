@@ -37,6 +37,7 @@ export const authService = {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Include httpOnly cookies
       body: JSON.stringify(credentials),
     });
 
@@ -54,6 +55,7 @@ export const authService = {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Include httpOnly cookies
       body: JSON.stringify(credentials),
     });
 
@@ -67,27 +69,25 @@ export const authService = {
 
   async logout(accessToken?: string): Promise<void> {
     try {
-      if (accessToken) {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        });
-      }
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Use httpOnly cookies instead of Authorization header
+      });
     } catch (error) {
       // Logout should always succeed on the client side
       console.error('Logout error:', error);
     }
   },
 
-  async fetchProfile(accessToken: string): Promise<{ user: AuthUser }> {
+  async fetchProfile(): Promise<{ user: AuthUser }> {
     const response = await fetch(`${API_BASE_URL}/auth/profile`, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Use httpOnly cookies instead of Authorization header
     });
 
     if (!response.ok) {
