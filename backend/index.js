@@ -8,6 +8,7 @@ import orgDataRouter from "./routers/orgData.js";
 import settingsRouter from "./routers/settings.js";
 import fortnoxEmployeesRouter from "./routers/fortnoxEmployees.js";
 import fortnoxAuthRouter from "./routers/fortnoxAuth.js";
+import fortnoxCompensationsRouter from "./routers/fortnoxCompensations.js";
 import cors from "cors";
 import session from 'express-session';
 
@@ -64,6 +65,7 @@ app.use("/api", orgDataRouter);
 app.use("/api", settingsRouter);
 app.use("/fortnox-employees", fortnoxEmployeesRouter);
 app.use("/fortnox-auth", fortnoxAuthRouter);
+app.use("/fortnox-compensations", fortnoxCompensationsRouter);
 
 // Simple config status endpoint
 app.get("/supabase/health", (req, res) => {
