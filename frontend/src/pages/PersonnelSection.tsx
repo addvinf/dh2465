@@ -12,12 +12,13 @@ import FortnoxPushButton from "../components/FortnoxPushButton";
 import FortnoxBatchErrors from "../components/FortnoxBatchErrors";
 // Fortnox auth status handled by FortnoxPushButton
 import { useRef, useState, useEffect } from "react";
-import * as XLSX from "xlsx";
+import { parseSheetToAOA } from "../utils/excelUtils";
 import { ExcelViewer } from "../components/ExcelViewer";
 import { toast } from "../hooks/use-toast";
 import { PersonnelTable } from "../components/PersonnelTable";
 import { PersonnelForm } from "../components/PersonnelForm";
 import type { PersonnelRecord, ViewMode } from "../types/personnel";
+import { normalizeDate } from "../utils/excelUtils";
 
 export function PersonnelSection() {
   const [personnel, setPersonnel] = useState<PersonnelRecord[]>([]);
@@ -112,66 +113,37 @@ export function PersonnelSection() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const data = new Uint8Array(ev.target?.result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: "array", cellDates: true });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-      if (jsonData.length > 2) {
-        // Look for the actual header row by checking for expected column names
-        let headerRowIndex = 0;
-        let dataStartIndex = 1;
-
-        // Check if first row contains headers or just labels
-        const firstRow = jsonData[0] as string[];
-
-        // If first row doesn't contain our expected headers, use second row
-        if (
-          firstRow &&
-          firstRow.some(
-            (cell) =>
-              cell?.includes("Tränarersättning") || !cell?.includes("Förnamn")
-          )
-        ) {
-          headerRowIndex = 1;
-          dataStartIndex = 2;
-        }
-
-        const headers = jsonData[headerRowIndex] as string[];
-        const dataRows = jsonData.slice(dataStartIndex) as any[][];
-
-        // Convert Date objects to YYYY-MM-DD strings for consistent display
-        const processedDataRows = dataRows.map(row => 
-          row.map(cell => {
-            if (cell instanceof Date) {
-              return cell.toISOString().split('T')[0];
-            }
-            return cell;
-          })
-        );
-
-        if (headers && processedDataRows.length > 0) {
-          setViewerHeaders(headers);
-          setViewerData(processedDataRows);
-          setViewerFileName(file.name);
-          setViewerOpen(true);
-        } else {
+    parseSheetToAOA(file, {
+      // Help detect header rows by expected personnel-oriented headers
+      expectedHeaders: [
+        "Förnamn",
+        "Efternamn",
+        "E-post",
+        "Personnummer",
+        "Clearingnr",
+        "Bankkonto",
+      ],
+      padRows: true,
+    })
+      .then(({ headers, rows, rowCount }) => {
+        if (!rowCount) {
           toast({
-            description: "Ingen giltig data hittades i filen",
+            description: "Filen innehåller inte tillräckligt med data",
             variant: "destructive",
           });
+          return;
         }
-      } else {
+        setViewerHeaders(headers);
+        setViewerData(rows);
+        setViewerFileName(file.name);
+        setViewerOpen(true);
+      })
+      .catch(() =>
         toast({
-          description: "Filen innehåller inte tillräckligt med data",
+          description: "Kunde inte läsa Excel-filen",
           variant: "destructive",
-        });
-      }
-    };
-    reader.readAsArrayBuffer(file);
+        })
+      );
   };
 
   const handleToggleStatus = async (record: PersonnelRecord) => {
@@ -276,9 +248,10 @@ export function PersonnelSection() {
               record["Kostnadsställe"] = String(value || "");
               break;
             case "Ändringsdag":
-              record["Ändringsdag"] = value
-                ? String(value)
-                : new Date().toISOString().split("T")[0];
+              {
+                const iso = normalizeDate(value);
+                record["Ändringsdag"] = iso || new Date().toISOString().split("T")[0];
+              }
               break;
             case "Månad":
               record["Månad"] = String(parseFloat(value) || 0);
