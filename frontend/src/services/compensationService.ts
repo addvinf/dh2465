@@ -22,8 +22,8 @@ export async function fetchCompensations(
   org: string
 ): Promise<{ data: CompensationRecord[]; count: number }> {
   try {
-    const { data } = await apiService.get(`/api/org/${encodeURIComponent(org)}/compensations`);
-    const rows = rowsFrom(data);
+    const response = await apiService.get<{ table: string; rows: CompensationRecord[] }>(`/api/org/${encodeURIComponent(org)}/compensations`);
+    const rows = rowsFrom(response);
     return { data: rows, count: rows.length };
   } catch (error) {
     const errorMsg = "Kunde inte hämta kompensationsdata: " + toErrorMessage(error, "");
@@ -43,11 +43,13 @@ export async function addCompensation(
       "Fortnox status": "pending" as const,
     };
 
-    const { data } = await apiService.post(
+    await apiService.post(
       `/api/org/${encodeURIComponent(org)}/compensations`,
       payload
     );
-    return data as CompensationRecord;
+    // Backend returns { table, inserted: 1 }, not the created record
+    // Return the payload with a generated id
+    return { ...payload, id: crypto.randomUUID() } as CompensationRecord;
   } catch (error) {
     throw new Error("Kunde inte lägga till ersättning: " + toErrorMessage(error, ""));
   }
@@ -69,11 +71,13 @@ export async function updateCompensation(
       updates["Total ersättning"] = updates.Antal * updates.Ersättning;
     }
 
-    const { data } = await apiService.patch(
+    await apiService.patch(
       `/api/org/${encodeURIComponent(org)}/compensations/${encodeURIComponent(id)}`,
       updates
     );
-    return data as CompensationRecord;
+    // Backend returns { table, id, updated: 1 }, not the updated record
+    // Return the updates merged with the id
+    return { ...updates, id } as CompensationRecord;
   } catch (error) {
     throw new Error("Kunde inte uppdatera ersättning: " + toErrorMessage(error, ""));
   }
@@ -94,12 +98,12 @@ export async function bulkUpdateCompensations(
   compensationData: Partial<CompensationRecord>[]
 ): Promise<{ added: number; updated: number; errors: string[] }> {
   try {
-    const { data } = await apiService.post(
+    const response = await apiService.post<{ added: number; updated: number; errors: string[] }>(
       `/api/org/${encodeURIComponent(org)}/compensations/bulk`,
       { compensations: compensationData }
     );
     // Expect server to return { added, updated, errors }
-    const { added = 0, updated = 0, errors = [] } = data ?? {};
+    const { added = 0, updated = 0, errors = [] } = response ?? {};
     return { added, updated, errors };
   } catch (error) {
     throw new Error("Kunde inte genomföra bulk-uppdatering: " + toErrorMessage(error, ""));
