@@ -88,9 +88,18 @@ app.use(express.json());
 app.use("/", helloWorldRouter);
 app.use("/auth", authRouter);
 
-
-// Fortnox auth routes - require authentication and admin role
-app.use("/fortnox-auth", authenticateToken, requireRole(['admin']), fortnoxAuthRouter);
+// Fortnox auth routes with conditional authentication
+app.use("/fortnox-auth", (req, res, next) => {
+  // Skip authentication for callback endpoint (called by Fortnox)
+  if (req.path === '/callback') {
+    return next();
+  }
+  // Apply authentication for all other fortnox-auth routes
+  authenticateToken(req, res, (err) => {
+    if (err) return next(err);
+    requireRole(['admin'])(req, res, next);
+  });
+}, fortnoxAuthRouter);
 
 
 // Protected routes - require authentication and admin role

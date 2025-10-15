@@ -68,13 +68,15 @@ export class AuthController {
         httpOnly: true,
         secure: false, // Allow HTTP in development
         sameSite: 'lax',
+        path: '/', // Ensure cookie is available on all paths
         maxAge: 3600000 // 1 hour
       });
 
       res.cookie('auth_refresh_token', 'dev-refresh-token', {
         httpOnly: true,
         secure: false,
-        sameSite: 'lax', 
+        sameSite: 'lax',
+        path: '/', // Ensure cookie is available on all paths
         maxAge: 7 * 24 * 3600000 // 7 days
       });
 
@@ -109,14 +111,16 @@ export class AuthController {
       res.cookie('auth_access_token', access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility
+        path: '/', // Ensure cookie is available on all paths
         maxAge: accessTokenMaxAge
       });
 
       res.cookie('auth_refresh_token', refresh_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility
+        path: '/', // Ensure cookie is available on all paths
         maxAge: 7 * 24 * 3600000 // 7 days
       });
 
