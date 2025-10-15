@@ -19,8 +19,7 @@ import {
 import { Search, X, Filter } from "lucide-react";
 import { useSettings } from "../../contexts/SettingsContext";
 import { useCostCenterSearch } from "../../hooks/useCostCenterSearch";
-import { useActivityTypeSearch } from "../../hooks/useActivityTypeSearch";
-import { usePersonnelSearch } from "../../hooks/usePersonnelSearch";
+import { useSalaryTypeSearch } from "../../hooks/useSalaryTypeSearch";
 import { CompensationTableRow } from "./Features/CompensationTableRow";
 import { CompensationAddRow } from "./Features/CompensationAddRow";
 import type { CompensationRecord } from "../../types/compensation";
@@ -57,8 +56,7 @@ export function SimpleCompensationTable({
 }: SimpleCompensationTableProps) {
   const { settings } = useSettings();
   const { getCodeFromDisplayText: getCostCenterCode, getDisplayTextFromCode: getCostCenterDisplay } = useCostCenterSearch();
-  const { getAccountFromDisplayText: getActivityAccount, getDisplayTextFromAccount: getActivityDisplay } = useActivityTypeSearch();
-  const { findPersonByName } = usePersonnelSearch({ organization: "test_förening" });
+  const { getCodeFromDisplayText: getSalaryTypeCode, getDisplayTextFromCode: getSalaryTypeDisplay } = useSalaryTypeSearch();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   
@@ -141,7 +139,7 @@ export function SimpleCompensationTable({
           compensation["Eventuell kommentar"],
           compensation["Upplagd av"],
           getCostCenterDisplay(compensation.Kostnadsställe || ""),
-          getActivityDisplay(compensation.Aktivitetstyp || ""),
+          getSalaryTypeDisplay(compensation.Aktivitetstyp ? parseInt(compensation.Aktivitetstyp) : 0),
           compensation["Avser Mån/år"],
           compensation.Antal?.toString(),
           compensation.Ersättning?.toString()
@@ -167,7 +165,7 @@ export function SimpleCompensationTable({
 
       return true;
     });
-  }, [compensations, searchTerm, filterCostCenter, filterStatus, getCostCenterDisplay, getActivityDisplay]);
+  }, [compensations, searchTerm, filterCostCenter, filterStatus, getCostCenterDisplay, getSalaryTypeDisplay]);
 
   // Clear all filters
   const clearFilters = () => {
@@ -223,7 +221,7 @@ export function SimpleCompensationTable({
       const submissionData = {
         ...formData,
         Kostnadsställe: getCostCenterCode(formData.Kostnadsställe),
-        Aktivitetstyp: getActivityAccount(formData.Aktivitetstyp),
+        Aktivitetstyp: getSalaryTypeCode(formData.Aktivitetstyp).toString(),
         "employee_id": "", // Will be auto-populated by service
         "Total ersättning": totalCompensation,
         "Fortnox status": "pending" as const,
@@ -251,7 +249,7 @@ export function SimpleCompensationTable({
       const submissionData = {
         ...formData,
         Kostnadsställe: getCostCenterCode(formData.Kostnadsställe),
-        Aktivitetstyp: getActivityAccount(formData.Aktivitetstyp),
+        Aktivitetstyp: getSalaryTypeCode(formData.Aktivitetstyp).toString(),
         "Total ersättning": totalCompensation,
       };
 
@@ -271,7 +269,7 @@ export function SimpleCompensationTable({
       "Avser Mån/år": compensation["Avser Mån/år"] || "",
       Ledare: compensation.Ledare || "",
       Kostnadsställe: getCostCenterDisplay(compensation.Kostnadsställe || ""),
-      Aktivitetstyp: getActivityDisplay(compensation.Aktivitetstyp || ""),
+      Aktivitetstyp: getSalaryTypeDisplay(parseInt(compensation.Aktivitetstyp || "0", 10)),
       Antal: compensation.Antal || 0,
       Ersättning: compensation.Ersättning || 0,
       "Datum utbet": compensation["Datum utbet"] || "",

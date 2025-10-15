@@ -17,9 +17,9 @@ import {
 } from "../ui/tooltip";
 import { PersonnelSearchInput } from "../personnel/PersonnelPopup/PersonnelSearchInput";
 import { CostCenterSearchInput } from "../costcenter/CostCenterSearchInput";
-import { ActivityTypeSearchInput } from "../activitytype/ActivityTypeSearchInput";
+import { SalaryTypeSearchInput } from "../salarytype/SalaryTypeSearchInput";
 import { useCostCenterSearch } from "../../hooks/useCostCenterSearch";
-import { useActivityTypeSearch } from "../../hooks/useActivityTypeSearch";
+import { useSalaryTypeSearch } from "../../hooks/useSalaryTypeSearch";
 import { findEmployeeIdByName } from "../../services/compensationService";
 import type { CompensationRecord } from "../../types/compensation";
 import type { PersonnelRecord } from "../../types/personnel";
@@ -53,7 +53,7 @@ export function CompensationExcelViewer({
   loading = false,
 }: CompensationExcelViewerProps) {
   const { getCodeFromDisplayText: getCostCenterCode } = useCostCenterSearch();
-  const { getAccountFromDisplayText: getActivityAccount } = useActivityTypeSearch();
+  const { getCodeFromDisplayText: getSalaryTypeCode } = useSalaryTypeSearch();
   const [editableData, setEditableData] = useState<
     Record<string, Record<string, CellState>>
   >({});
@@ -171,14 +171,14 @@ export function CompensationExcelViewer({
         );
       }
 
-      // Special handling for Aktivitetstyp field with activity type search
+      // Special handling for Aktivitetstyp field with salary type search
       if (field === "Aktivitetstyp") {
         return (
           <div key={cellKey} className={`relative h-8 ${backgroundClass}`}>
-            <ActivityTypeSearchInput
+            <SalaryTypeSearchInput
               value={cellState.value}
-              onChange={(newValue) => updateCell(rowIndex, field, newValue)}
-              placeholder="Skriv för att söka aktivitetstyp..."
+              onChange={(newValue: string) => updateCell(rowIndex, field, newValue)}
+              placeholder="Skriv för att söka löneart..."
               className="h-full px-2 text-xs bg-transparent border-0 focus:outline-none focus:bg-blue-900/20 transition-colors"
               hideError={true}
               useTooltip={true}
@@ -254,7 +254,7 @@ export function CompensationExcelViewer({
           if (field === "Kostnadsställe") {
             rowData[field as keyof CompensationRecord] = getCostCenterCode(value) as any;
           } else if (field === "Aktivitetstyp") {
-            rowData[field as keyof CompensationRecord] = getActivityAccount(value) as any;
+            rowData[field as keyof CompensationRecord] = getSalaryTypeCode(value).toString() as any;
           } else {
             rowData[field as keyof CompensationRecord] = value as any;
           }
