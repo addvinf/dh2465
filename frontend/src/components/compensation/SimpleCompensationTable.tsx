@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -7,6 +7,16 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import { Input } from "../ui/input";
+import { Button } from "../ui/Button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Search, X, Filter } from "lucide-react";
 import { useSettings } from "../../contexts/SettingsContext";
 import { useCostCenterSearch } from "../../hooks/useCostCenterSearch";
 import { useActivityTypeSearch } from "../../hooks/useActivityTypeSearch";
@@ -49,6 +59,12 @@ export function SimpleCompensationTable({
   const { getAccountFromDisplayText: getActivityAccount, getDisplayTextFromAccount: getActivityDisplay } = useActivityTypeSearch();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCostCenter, setFilterCostCenter] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  
   const [formData, setFormData] = useState<CompensationFormData>({
     "Upplagd av": settings.organization?.contactPerson || "",
     "Avser Mån/år": "",
@@ -71,6 +87,60 @@ export function SimpleCompensationTable({
   const calculateTotal = (antal: number, ersattning: number) => {
     return antal * ersattning;
   };
+
+  // Get unique values for filter options
+  const availableCostCenters = useMemo(() => {
+    const centers = [...new Set(compensations.map(c => getCostCenterDisplay(c.Kostnadsställe || "")).filter(Boolean))];
+    return centers.sort();
+  }, [compensations, getCostCenterDisplay]);
+
+  // Filter and search logic
+  const filteredCompensations = useMemo(() => {
+    return compensations.filter(compensation => {
+      // Search filter
+      if (searchTerm.trim()) {
+        const searchLower = searchTerm.toLowerCase();
+        const searchableText = [
+          compensation.Ledare,
+          compensation["Eventuell kommentar"],
+          compensation["Upplagd av"],
+          getCostCenterDisplay(compensation.Kostnadsställe || ""),
+          getActivityDisplay(compensation.Aktivitetstyp || ""),
+          compensation["Avser Mån/år"],
+          compensation.Antal?.toString(),
+          compensation.Ersättning?.toString()
+        ].filter(Boolean).join(" ").toLowerCase();
+        
+        if (!searchableText.includes(searchLower)) {
+          return false;
+        }
+      }
+
+      // Cost center filter
+      if (filterCostCenter !== "all") {
+        const displayCostCenter = getCostCenterDisplay(compensation.Kostnadsställe || "");
+        if (displayCostCenter !== filterCostCenter) {
+          return false;
+        }
+      }
+
+      // Status filter
+      if (filterStatus !== "all" && compensation["Fortnox status"] !== filterStatus) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [compensations, searchTerm, filterCostCenter, filterStatus, getCostCenterDisplay, getActivityDisplay]);
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterCostCenter("all");
+    setFilterStatus("all");
+  };
+
+  const hasActiveFilters = searchTerm || filterCostCenter !== "all" || filterStatus !== "all";
 
   const resetForm = () => {
     setFormData({
@@ -201,6 +271,78 @@ export function SimpleCompensationTable({
 
   return (
     <div className="space-y-4">
+      {/* Search and Filter Bar */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+          {/* Search Input */}
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Sök..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 text-sm"
+            />
+          </div>
+
+          {/* Filter Dropdown Buttons */}
+            <div className="flex gap-2 items-stretch">
+            {/* Cost Center Filter */}
+            <Select value={filterCostCenter} onValueChange={setFilterCostCenter}>
+              <SelectTrigger className="w-46 text-sm h-10">
+              <Filter className="h-3 w-3 mr-1" />
+              <SelectValue placeholder="Kostnadsställe" />
+              </SelectTrigger>
+              <SelectContent className="text-sm">
+              <SelectItem value="all" className="text-sm">Alla kostnadsställen</SelectItem>
+              {availableCostCenters.map(center => (
+                <SelectItem key={center} value={center} className="text-sm">
+                {center}
+                </SelectItem>
+              ))}
+              </SelectContent>
+            </Select>
+
+            {/* Status Filter */}
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-28 text-sm h-10">
+              <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent className="text-sm">
+              <SelectItem value="all" className="text-sm">Alla status</SelectItem>
+              <SelectItem value="pending" className="text-sm">Väntande</SelectItem>
+              <SelectItem value="sent" className="text-sm">Skickad</SelectItem>
+              <SelectItem value="completed" className="text-sm">Klar</SelectItem>
+              <SelectItem value="error" className="text-sm">Fel</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Clear Filters Button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={clearFilters}
+              disabled={!hasActiveFilters}
+              className="px-3 text-sm h-10"
+            >
+              <X className="h-3 w-3 mr-1" />
+              Rensa
+            </Button>
+            </div>
+        </div>
+
+        {/* Filter Summary */}
+        {hasActiveFilters && (
+          <div className="text-sm text-muted-foreground">
+            Visar {filteredCompensations.length} av {compensations.length} ersättningar
+            {searchTerm && ` • Sökning: "${searchTerm}"`}
+            {filterCostCenter !== "all" && ` • Kostnadsställe: ${filterCostCenter}`}
+            {filterStatus !== "all" && ` • Status: ${filterStatus}`}
+          </div>
+        )}
+      </div>
+
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -239,7 +381,7 @@ export function SimpleCompensationTable({
           </TableHeader>
           <TableBody>
             {/* Existing Compensations */}
-            {compensations
+            {filteredCompensations
               .slice()
               .sort((a, b) => {
                 const dateA = a["Avser Mån/år"] || "";
@@ -289,13 +431,16 @@ export function SimpleCompensationTable({
             />
 
             {/* Empty State */}
-            {compensations.length === 0 && !showAddForm && (
+            {filteredCompensations.length === 0 && !showAddForm && (
               <TableRow>
                 <TableCell
                   colSpan={12}
                   className="text-center py-12 text-muted-foreground text-xs"
                 >
-                  Inga ersättningar registrerade
+                  {hasActiveFilters 
+                    ? "Inga ersättningar matchar de valda filtren"
+                    : "Inga ersättningar registrerade"
+                  }
                 </TableCell>
               </TableRow>
             )}

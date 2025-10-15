@@ -71,23 +71,24 @@ export function LonerPage() {
 
   const generatePeriodOptions = () => {
     const options = [{ value: "all", label: "Alla perioder" }];
-    const currentDate = new Date();
-
-    for (let i = -12; i <= 3; i++) {
-      const date = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + i,
-        1
-      );
-      const monthYear = date.toLocaleDateString("sv-SE", {
-        month: "long",
-        year: "numeric",
-      });
-      const value = `${date.getFullYear()}-${String(
-        date.getMonth() + 1
-      ).padStart(2, "0")}`;
-      options.push({ label: monthYear, value });
-    }
+    
+    // Get unique months from actual compensation data, sorted newest first
+    const availableMonths = [...new Set(compensations.map(c => c["Avser Mån/år"]).filter(Boolean))];
+    availableMonths.sort().reverse();
+    
+    // Add available months to options
+    availableMonths.forEach(monthValue => {
+      // Convert YYYY-MM to readable format
+      if (monthValue && monthValue.includes('-')) {
+        const [year, month] = monthValue.split('-');
+        const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const monthYear = date.toLocaleDateString("sv-SE", {
+          month: "long",
+          year: "numeric",
+        });
+        options.push({ label: monthYear, value: monthValue });
+      }
+    });
 
     return options;
   };
