@@ -8,7 +8,7 @@ import {
 } from "../../ui/select";
 import { PersonnelSearchInput } from "../../personnel/PersonnelPopup/PersonnelSearchInput";
 import { CostCenterSearchInput } from "../../costcenter/CostCenterSearchInput";
-import { SalaryTypeSearchInput } from "../../salarytype/SalaryTypeSearchInput";
+import { ActivityTypeSearchInput } from "../../activitytype/ActivityTypeSearchInput";
 import { useSettings } from "../../../contexts/SettingsContext";
 
 interface CompensationFormFieldProps {
@@ -19,7 +19,7 @@ interface CompensationFormFieldProps {
     | "month-select"
     | "cost-center-select"
     | "cost-center-search"
-    | "salary-type-search"
+    | "activity-type-search"
     | "personnel-select";
   value: string | number;
   onChange: (value: string | number) => void;
@@ -156,12 +156,12 @@ export function CompensationFormField({
         />
       );
 
-    case "salary-type-search":
+    case "activity-type-search":
       return (
-        <SalaryTypeSearchInput
+        <ActivityTypeSearchInput
           value={value as string}
           onChange={(val) => onChange(val)}
-          placeholder={placeholder || "Skriv för att söka löneart..."}
+          placeholder={placeholder || "Skriv för att söka aktivitetstyp..."}
           className={`${baseInputClasses} ${className}`}
           hideError={useTooltip}
           useTooltip={useTooltip}

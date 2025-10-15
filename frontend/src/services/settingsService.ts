@@ -114,17 +114,26 @@ export const settingsService = {
         {
           id: "1",
           name: "Grundlön",
-          code: 7110
+          account: "2610",
+          costCenter: "200",
+          category: "regular",
+          vacationRate: 12
         },
         {
           id: "2",
-          name: "Tränarlön",
-          code: 7120
+          name: "Tävlingsersättning",
+          account: "2610", 
+          costCenter: "300",
+          category: "sports",
+          vacationRate: null
         },
         {
           id: "3",
-          name: "Domararvoden",
-          code: 7130
+          name: "Träningsersättning",
+          account: "2610",
+          costCenter: "300", 
+          category: "sports",
+          vacationRate: null
         }
       ]
     };

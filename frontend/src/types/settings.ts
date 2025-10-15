@@ -39,8 +39,11 @@ export interface CostCenter {
 
 export interface SalaryType {
   id: string;
-  name: string; // "Löneart"
-  code: number; // "Kod" - connected to Fortnox
+  name: string;
+  account: string;
+  costCenter: string;
+  category: 'sports' | 'regular';
+  vacationRate: number | null;
 }
 
 export interface GoogleSheetsIntegration {

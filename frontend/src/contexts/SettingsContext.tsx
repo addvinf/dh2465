@@ -97,18 +97,27 @@ const defaultSettings: Settings = {
   salaryTypes: [
     {
       id: "1",
-      name: "Grundlön",
-      code: 7110,
+      name: "Lön Tränare",
+      account: "7120",
+      costCenter: "5 - Träning",
+      category: "sports",
+      vacationRate: 12,
     },
     {
       id: "2",
-      name: "Tränarlön",
-      code: 7120,
+      name: "Domararvoden",
+      account: "7130",
+      costCenter: "6 - Matcher",
+      category: "sports",
+      vacationRate: null,
     },
     {
       id: "3",
-      name: "Domararvoden",
-      code: 7130,
+      name: "Administrativ personal",
+      account: "7110",
+      costCenter: "1 - Administration",
+      category: "regular",
+      vacationRate: 12,
     },
   ],
   integrations: {

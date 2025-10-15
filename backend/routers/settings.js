@@ -234,27 +234,30 @@ function createDefaultSettings(organizationName) {
       },
     ],
     salaryTypes: [
-
-    {
-      id: "1",
-      code: 112,
-      name: "Tränarlön"
-    },
-    {
-      id: "2",
-      code: 113,
-      name: "Heldag"
-    },
-    {
-      id: "3",
-      code: 497,
-      name: "Domararvode"
-    },
-    {
-      id: "4",
-      code: 114,
-      name: "Övrigt"
-    }
+      {
+        id: "1",
+        name: "Grundlön",
+        account: "2610",
+        costCenter: "200",
+        category: "regular",
+        vacationRate: 12,
+      },
+      {
+        id: "2",
+        name: "Tävlingsersättning",
+        account: "2610",
+        costCenter: "300",
+        category: "sports",
+        vacationRate: null,
+      },
+      {
+        id: "3",
+        name: "Träningsersättning",
+        account: "2610",
+        costCenter: "300",
+        category: "sports",
+        vacationRate: null,
+      },
     ],
   };
 }

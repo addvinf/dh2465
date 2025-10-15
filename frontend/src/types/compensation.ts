@@ -7,7 +7,7 @@ export interface CompensationRecord {
   "Ledare": string; // Personnel name
   "employee_id": string; // Fortnox employee ID from personnel
   "Kostnadsställe": string; // Cost center code (number) from settings
-  "Aktivitetstyp": string; // Salary type code (number as string) from settings
+  "Aktivitetstyp": string; // Activity type account number from settings
   "Antal": number; // Quantity
   "Ersättning": number; // Compensation per unit
   "Total ersättning"?: number; // Calculated: Antal * Ersättning
@@ -36,6 +36,13 @@ export interface CompensationPeriod {
   month: number;
   year: number;
   label: string; // e.g., "Oktober 2024"
+}
+
+// Activity types that could be in settings
+export interface ActivityType {
+  id: string;
+  name: string;
+  description?: string;
 }
 
 // Compensation view modes
