@@ -25,7 +25,7 @@ export class SessionController {
 
     try {
       const { refresh_token } = req.body;
-      const result = await AuthService.refreshToken(refresh_token);
+      const result = await AuthService.refreshSession(refresh_token);
       
       return res.json({
         message: 'Token refreshed successfully',
@@ -58,14 +58,14 @@ export class SessionController {
   static async setSecureTokens(req, res) {
     if (process.env.DISABLE_AUTH === 'true') {
       // Set mock cookies for development
-      res.cookie('access_token', 'dev-access-token', {
+      res.cookie('auth_access_token', 'dev-access-token', {
         httpOnly: true,
         secure: false, // Allow HTTP in development
         sameSite: 'lax',
         maxAge: 3600000 // 1 hour
       });
 
-      res.cookie('refresh_token', 'dev-refresh-token', {
+      res.cookie('auth_refresh_token', 'dev-refresh-token', {
         httpOnly: true,
         secure: false,
         sameSite: 'lax', 
@@ -90,14 +90,14 @@ export class SessionController {
       }
 
       // Set secure httpOnly cookies
-      res.cookie('access_token', access_token, {
+      res.cookie('auth_access_token', access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         maxAge: accessTokenMaxAge
       });
 
-      res.cookie('refresh_token', refresh_token, {
+      res.cookie('auth_refresh_token', refresh_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',

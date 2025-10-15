@@ -1,46 +1,15 @@
 const API_BASE_URL = 'http://localhost:3000';
 
-const getAuthToken = async (): Promise<string | null> => {
-  try {
-    // Try to get token from secure storage first
-    const { SecureTokenStorage } = await import('../utils/secureTokenStorage');
-    const token = await SecureTokenStorage.getAccessToken();
-    
-    if (token) {
-      return token;
-    }
 
-    // Fallback to development token storage
-    const fallbackToken = SecureTokenStorage.getFallbackAccessToken();
-    if (fallbackToken) {
-      return fallbackToken;
-    }
-
-    // Last resort: check old localStorage (for migration)
-    const session = localStorage.getItem('authSession');
-    if (session) {
-      try {
-        const sessionData = JSON.parse(session);
-        return sessionData.access_token;
-      } catch (error) {
-        console.error('Error parsing session:', error);
-        return null;
-      }
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Error getting auth token:', error);
-    return null;
-  }
-};
 
 class ApiService {
   private async getAuthHeaders() {
-    const token = await getAuthToken();
+    // Since we're using httpOnly cookies for authentication,
+    // we don't need to manually add Authorization headers
+    // The cookies will be automatically sent with credentials: 'include'
+    console.log('ApiService: Using httpOnly cookies for authentication');
     return {
       'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
     };
   }
 
