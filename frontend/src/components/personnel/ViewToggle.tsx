@@ -19,26 +19,18 @@ export function ViewToggle({
     >
       <Button
         size="sm"
-        variant={currentView === "personal" ? "default" : "ghost"}
+        variant={currentView === "personal" ? "outline" : "ghost"}
         onClick={() => onViewChange("personal")}
-        className={`h-8 px-3 ${
-          currentView === "personal"
-            ? "bg-background text-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
+        className={`h-8 px-3 `}
       >
         <User className="mr-2 h-4 w-4" />
         Personinfo
       </Button>
       <Button
         size="sm"
-        variant={currentView === "financial" ? "default" : "ghost"}
+        variant={currentView === "financial" ? "outline" : "ghost"}
         onClick={() => onViewChange("financial")}
-        className={`h-8 px-3 ${
-          currentView === "financial"
-            ? "bg-background text-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
+        className={`h-8 px-3 `}
       >
         <CreditCard className="mr-2 h-4 w-4" />
         Ekonomiinfo
