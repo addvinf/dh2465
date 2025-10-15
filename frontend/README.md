@@ -1,73 +1,73 @@
-# React + TypeScript + Vite
+# DH2465 - Frontend Development Setup
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 🔓 Disabling Authentication for Development
 
-Currently, two official plugins are available:
+To test the application without authentication, you need to configure both frontend and backend:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Frontend Setup
 
-## React Compiler
+Create a `.env` file in this directory:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+touch .env
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Add this line to `.env`:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```env
+VITE_DISABLE_AUTH=true
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Backend Setup
+
+Create a `.env` file in the `backend/` directory:
+
+```bash
+cd ../backend
+touch .env
+```
+
+Add these lines to `backend/.env`:
+
+```env
+DISABLE_AUTH=true
+SESSION_SECRET=your-generated-secret-here
+```
+
+**Generate a secure session secret:**
+
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+Copy the output and replace `your-generated-secret-here` with the generated value.
+
+### What this does:
+
+- **Frontend**: Bypasses login/register pages and skips authentication checks
+- **Backend**: Makes all protected API routes accessible without JWT tokens
+- **Result**: You can access all application features immediately without logging in
+
+⚠️ **Important**: Only use this in development. Never set this to `true` in production.
+
+### To re-enable authentication:
+
+Change both values to `false` or remove the lines entirely:
+
+**Frontend `.env`:**
+```env
+VITE_DISABLE_AUTH=false
+```
+
+**Backend `.env`:**
+```env
+DISABLE_AUTH=false
+```
+
+## Development
+
+To start the development server:
+
+```bash
+npm run dev
 ```

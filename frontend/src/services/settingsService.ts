@@ -1,42 +1,20 @@
 import type { Settings } from "../types/settings";
-
-const API_BASE_URL = "http://localhost:3000/api";
+import { apiService } from "./apiService";
 
 export const settingsService = {
   async fetchSettings(organization: string): Promise<Settings> {
-    const response = await fetch(`${API_BASE_URL}/org/${encodeURIComponent(organization)}/settings`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch settings');
-    }
-    return response.json();
+    return await apiService.get<Settings>(`/api/org/${encodeURIComponent(organization)}/settings`);
   },
 
   async updateSettings(organization: string, settings: Settings): Promise<Settings> {
-    const response = await fetch(`${API_BASE_URL}/org/${encodeURIComponent(organization)}/settings`, {
+    return await apiService.request<Settings>(`/api/org/${encodeURIComponent(organization)}/settings`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(settings),
     });
-    if (!response.ok) {
-      throw new Error('Failed to update settings');
-    }
-    return response.json();
   },
 
   async updateSettingsSection(organization: string, section: keyof Settings, data: any): Promise<Settings> {
-    const response = await fetch(`${API_BASE_URL}/org/${encodeURIComponent(organization)}/settings/${section}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      throw new Error(`Failed to update ${section} settings`);
-    }
-    return response.json();
+    return await apiService.patch<Settings>(`/api/org/${encodeURIComponent(organization)}/settings/${section}`, data);
   },
 
   createDefaultSettings(organizationName: string): Settings {

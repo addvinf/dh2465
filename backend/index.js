@@ -1,6 +1,11 @@
 import path from "node:path";
 import dotenv from "dotenv";
 import express from "express";
+import cors from "cors";
+import session from 'express-session';
+import cookieParser from 'cookie-parser';
+
+// Application imports
 import { createSupabaseClientFromEnv } from "./supabase.js";
 import helloWorldRouter from "./routers/helloWorld.js";
 import supabaseExampleRouter from "./routers/supabaseExample.js";
@@ -8,17 +13,39 @@ import orgDataRouter from "./routers/orgData.js";
 import settingsRouter from "./routers/settings.js";
 import fortnoxEmployeesRouter from "./routers/fortnoxEmployees.js";
 import fortnoxAuthRouter from "./routers/fortnoxAuth.js";
-import cors from "cors";
-import session from 'express-session';
+import authRouter from "./routers/auth.js";
+import { authenticateToken, requireRole } from "./middleware/auth.js";
 
+// Security and configuration imports
+import { 
+  securityHeaders, 
+  httpsEnforcement, 
+  corsOptions, 
+  errorHandler, 
+  notFoundHandler 
+} from "./middleware/security.js";
+
+// Load environment variables
 dotenv.config();
 dotenv.config({
   path: path.resolve(path.dirname(new URL(import.meta.url).pathname), ".env"),
 });
 
+// Simple environment check
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('❌ Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+  process.exit(1);
+}
+
+// Initialize Express application
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
-// Sessions (required for session-only Fortnox auth)
+
+// Apply security middleware
+app.use(securityHeaders);
+app.use(httpsEnforcement);
+
+// Configure sessions
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
   resave: false,
@@ -26,9 +53,9 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
-    maxAge: 8 * 60 * 60 * 1000,
-  },
+    sameSite: 'lax',
+    maxAge: 8 * 60 * 60 * 1000, // 8 hours
+  }
 }));
 
 createSupabaseClientFromEnv()
@@ -48,22 +75,24 @@ createSupabaseClientFromEnv()
     );
   });
 
-// TODO REMOVE IN PRODUCTION
-app.use(
-  cors({
-    origin: "http://localhost:5173", // allow frontend to access the backend
-    credentials: true,
-  })
-);
+// Configure CORS
+app.use(cors(corsOptions));
+
+// Parse cookies
+app.use(cookieParser());
 
 app.use(express.json());
 
+// Public routes
 app.use("/", helloWorldRouter);
-app.use("/supabase-example", supabaseExampleRouter);
-app.use("/api", orgDataRouter);
-app.use("/api", settingsRouter);
-app.use("/fortnox-employees", fortnoxEmployeesRouter);
+app.use("/auth", authRouter);
 app.use("/fortnox-auth", fortnoxAuthRouter);
+
+// Protected routes - require authentication
+app.use("/supabase-example", authenticateToken, supabaseExampleRouter);
+app.use("/api", authenticateToken, orgDataRouter);
+app.use("/api", authenticateToken, settingsRouter);
+app.use("/fortnox-employees", authenticateToken, requireRole(['admin', 'manager']), fortnoxEmployeesRouter);
 
 // Simple config status endpoint
 app.get("/supabase/health", (req, res) => {
@@ -71,10 +100,11 @@ app.get("/supabase/health", (req, res) => {
   res.json({ configured });
 });
 
-app.use((req, res) => {
-  res.status(404).json({ error: "Not Found" });
-});
+// Error handling
+app.use(notFoundHandler);
+app.use(errorHandler);
 
+// Start server
 app.listen(port, () => {
   console.log(`Express server listening on http://localhost:${port}`);
 });

@@ -4,13 +4,20 @@ import { Button } from "../components/ui/Button";
 import { Header } from "../components/Header";
 import { checkFortnoxAuthStatus, initiateFortnoxLogin } from "../services/fortnoxService";
 import { useToast } from "../components/ui/use-toast";
+import { useAuth } from "../contexts/AuthContext";
 
 const FrontPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isFortnoxAuthorized, setIsFortnoxAuthorized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Helper function to check if user has admin or manager role
+  const hasAdminAccess = () => {
+    return user?.role === 'admin' || user?.role === 'manager';
+  };
 
   useEffect(() => {
     // Check for auth callback parameters
@@ -129,12 +136,14 @@ const FrontPage: React.FC = () => {
         </div>
 
         <p className="text-xl mb-4">Slask pages:</p>
-        <Button
-          className="px-10 py-4 text-lg"
-          onClick={() => navigate("/admin")}
-        >
-          Admin Page
-        </Button>
+        {hasAdminAccess() && (
+          <Button
+            className="px-10 py-4 text-lg"
+            onClick={() => navigate("/admin")}
+          >
+            Admin Page
+          </Button>
+        )}
         <Button
           className="px-10 py-4 text-lg mt-4"
           onClick={() => navigate("/404")}
