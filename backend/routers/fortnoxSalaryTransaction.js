@@ -11,8 +11,5 @@ router.post('/add-salary', async (req, res) => {
         .select('*')
         .eq('id', req.body.id);
 
-
-
-
-});
-
+}
+);

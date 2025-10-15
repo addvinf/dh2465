@@ -1,3 +1,5 @@
+import { apiService } from './apiService';
+
 const API_BASE_URL = 'http://localhost:3000';
 
 export interface FortnoxAuthStatus {
@@ -10,15 +12,7 @@ export interface FortnoxAuthStatus {
  * Check the current Fortnox authentication status
  */
 export async function checkFortnoxAuthStatus(): Promise<FortnoxAuthStatus> {
-  const response = await fetch(`${API_BASE_URL}/fortnox-auth/status`, {
-    credentials: 'include',
-  });
-  
-  if (!response.ok) {
-    throw new Error('Failed to check Fortnox authentication status');
-  }
-  
-  return response.json();
+  return await apiService.get<FortnoxAuthStatus>('/fortnox-auth/status');
 }
 
 /**
@@ -33,18 +27,5 @@ export function initiateFortnoxLogin(): void {
  * Refresh the Fortnox access token
  */
 export async function refreshFortnoxToken(): Promise<{ refreshed: boolean; expiresAt: number }> {
-  const response = await fetch(`${API_BASE_URL}/fortnox-auth/refresh`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to refresh token');
-  }
-  
-  return response.json();
+  return await apiService.post<{ refreshed: boolean; expiresAt: number }>('/fortnox-auth/refresh', {});
 }

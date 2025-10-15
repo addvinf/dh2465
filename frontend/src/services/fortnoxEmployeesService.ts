@@ -1,4 +1,24 @@
+import { apiService } from './apiService';
+
 const API_BASE_URL = 'http://localhost:3000';
+
+export interface BatchPushResult {
+  processed: number;
+  successes: number;
+  failures: number;
+  dryRun: boolean;
+  items: BatchResultItem[];
+}
+
+export async function pushToFortnox(options?: { limit?: number; dryRun?: boolean }): Promise<BatchPushResult> {
+  const params = new URLSearchParams();
+  if (options?.limit !== undefined) params.set('limit', String(options.limit));
+  if (options?.dryRun !== undefined) params.set('dryRun', String(options.dryRun));
+
+  const endpoint = `/fortnox-employees/batch${params.toString() ? `?${params.toString()}` : ''}`;
+  
+  return await apiService.post<BatchPushResult>(endpoint, {});
+}
 
 export interface BatchResultItem {
   id: string;
