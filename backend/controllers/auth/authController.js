@@ -77,7 +77,7 @@ export class AuthController {
         secure: false,
         sameSite: 'lax',
         path: '/', // Ensure cookie is available on all paths
-        maxAge: 7 * 24 * 3600000 // 7 days
+        maxAge: 4 * 3600000 // 4 hours - More secure than 7 days
       });
 
       return res.json({
@@ -121,7 +121,7 @@ export class AuthController {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility
         path: '/', // Ensure cookie is available on all paths
-        maxAge: 7 * 24 * 3600000 // 7 days
+        maxAge: 4 * 3600000 // 4 hours - More secure than 7 days
       });
 
       return res.json({
