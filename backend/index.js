@@ -88,13 +88,13 @@ app.use(express.json());
 app.use("/", helloWorldRouter);
 app.use("/auth", authRouter);
 app.use("/fortnox-auth", fortnoxAuthRouter);
-app.use("/fortnox-compensations", fortnoxCompensationsRouter);
 
 // Protected routes - require authentication
 app.use("/supabase-example", authenticateToken, supabaseExampleRouter);
 app.use("/api", authenticateToken, orgDataRouter);
 app.use("/api", authenticateToken, settingsRouter);
 app.use("/fortnox-employees", authenticateToken, requireRole(['admin', 'manager']), fortnoxEmployeesRouter);
+app.use("/fortnox-compensations", authenticateToken, requireRole(['admin', 'manager']), fortnoxCompensationsRouter);
 
 // Simple config status endpoint
 app.get("/supabase/health", (req, res) => {
