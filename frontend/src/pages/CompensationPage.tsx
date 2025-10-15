@@ -163,7 +163,7 @@ export function LonerPage() {
     data: Omit<CompensationRecord, "id">
   ) => {
     try {
-      await addCompensation(org, data as any);
+      await addCompensation(org, data as any, personnelList);
       toast({
         description: "Ersättning tillagd",
         variant: "default",
@@ -180,7 +180,7 @@ export function LonerPage() {
 
   const handleEditCompensation = async (compensation: CompensationRecord) => {
     try {
-      await updateCompensation(org, compensation.id!, compensation);
+      await updateCompensation(org, compensation.id!, compensation, personnelList);
       toast({
         description: "Ersättning uppdaterad",
         variant: "default",

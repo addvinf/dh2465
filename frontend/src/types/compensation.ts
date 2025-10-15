@@ -5,8 +5,9 @@ export interface CompensationRecord {
   "Upplagd av": string; // Contact person from settings
   "Avser Mån/år": string; // Period (Month/Year)
   "Ledare": string; // Personnel name
-  "Kostnadsställe": string; // Cost center from settings
-  "Aktivitetstyp": string; // Activity type from settings
+  "employee_id": string; // Fortnox employee ID from personnel
+  "Kostnadsställe": string; // Cost center code (number) from settings
+  "Aktivitetstyp": string; // Activity type account number from settings
   "Antal": number; // Quantity
   "Ersättning": number; // Compensation per unit
   "Total ersättning"?: number; // Calculated: Antal * Ersättning
@@ -17,8 +18,9 @@ export interface CompensationRecord {
   updated_at?: string;
 }
 
-export interface CompensationFormData extends Omit<CompensationRecord, "id" | "Total ersättning" | "created_at" | "updated_at"> {
+export interface CompensationFormData extends Omit<CompensationRecord, "id" | "Total ersättning" | "created_at" | "updated_at" | "employee_id"> {
   "Total ersättning": number; // Always calculated in forms
+  "employee_id"?: string; // Auto-populated from selected personnel
 }
 
 // For grouping by person

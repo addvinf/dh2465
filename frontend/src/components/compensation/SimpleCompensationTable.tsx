@@ -8,6 +8,8 @@ import {
   TableRow,
 } from "../ui/table";
 import { useSettings } from "../../contexts/SettingsContext";
+import { useCostCenterSearch } from "../../hooks/useCostCenterSearch";
+import { useActivityTypeSearch } from "../../hooks/useActivityTypeSearch";
 import { CompensationTableRow } from "./Features/CompensationTableRow";
 import { CompensationAddRow } from "./Features/CompensationAddRow";
 import type { CompensationRecord } from "../../types/compensation";
@@ -43,6 +45,8 @@ export function SimpleCompensationTable({
   loading = false,
 }: SimpleCompensationTableProps) {
   const { settings } = useSettings();
+  const { getCodeFromDisplayText: getCostCenterCode, getDisplayTextFromCode: getCostCenterDisplay } = useCostCenterSearch();
+  const { getAccountFromDisplayText: getActivityAccount, getDisplayTextFromAccount: getActivityDisplay } = useActivityTypeSearch();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState<CompensationFormData>({
@@ -109,11 +113,17 @@ export function SimpleCompensationTable({
     );
 
     try {
-      await onAdd({
+      // Convert display text to codes for storage
+      const submissionData = {
         ...formData,
+        Kostnadsställe: getCostCenterCode(formData.Kostnadsställe),
+        Aktivitetstyp: getActivityAccount(formData.Aktivitetstyp),
+        "employee_id": "", // Will be auto-populated by service
         "Total ersättning": totalCompensation,
-        "Fortnox status": "pending",
-      });
+        "Fortnox status": "pending" as const,
+      };
+
+      await onAdd(submissionData);
       resetForm();
       setShowAddForm(false);
     } catch (error) {
@@ -131,10 +141,15 @@ export function SimpleCompensationTable({
     );
 
     try {
-      await onEdit(compensation.id!, {
+      // Convert display text to codes for storage
+      const submissionData = {
         ...formData,
+        Kostnadsställe: getCostCenterCode(formData.Kostnadsställe),
+        Aktivitetstyp: getActivityAccount(formData.Aktivitetstyp),
         "Total ersättning": totalCompensation,
-      });
+      };
+
+      await onEdit(compensation.id!, submissionData);
       setEditingId(null);
       resetForm();
     } catch (error) {
@@ -144,12 +159,13 @@ export function SimpleCompensationTable({
   };
 
   const startEdit = (compensation: CompensationRecord) => {
+    // Convert stored codes back to display text for editing
     setFormData({
       "Upplagd av": compensation["Upplagd av"] || "",
       "Avser Mån/år": compensation["Avser Mån/år"] || "",
       Ledare: compensation.Ledare || "",
-      Kostnadsställe: compensation.Kostnadsställe || "",
-      Aktivitetstyp: compensation.Aktivitetstyp || "",
+      Kostnadsställe: getCostCenterDisplay(compensation.Kostnadsställe || ""),
+      Aktivitetstyp: getActivityDisplay(compensation.Aktivitetstyp || ""),
       Antal: compensation.Antal || 0,
       Ersättning: compensation.Ersättning || 0,
       "Datum utbet": compensation["Datum utbet"] || "",

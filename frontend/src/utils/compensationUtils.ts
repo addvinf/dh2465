@@ -113,5 +113,7 @@ export function validateCompensationRecord(record: Partial<CompensationRecord>):
     errors.push("Datum utbet måste vara i format YYYY-MM-DD");
   }
 
+  // employee_id will be auto-populated, so no validation needed
+
   return errors;
 }

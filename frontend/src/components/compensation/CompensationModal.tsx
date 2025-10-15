@@ -10,7 +10,10 @@ import {
 } from "../ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { CostCenterSearchInput } from "../costcenter/CostCenterSearchInput";
+import { ActivityTypeSearchInput } from "../activitytype/ActivityTypeSearchInput";
 import { useSettings } from "../../contexts/SettingsContext";
+import { useCostCenterSearch } from "../../hooks/useCostCenterSearch";
+import { useActivityTypeSearch } from "../../hooks/useActivityTypeSearch";
 import type { CompensationRecord } from "../../types/compensation";
 
 interface CompensationModalProps {
@@ -27,6 +30,7 @@ interface FormData {
   "Upplagd av": string;
   "Avser Mån/år": string;
   Ledare: string;
+  "employee_id": string;
   Kostnadsställe: string;
   Aktivitetstyp: string;
   Antal: number;
@@ -43,11 +47,14 @@ export function CompensationModal({
   defaultPersonName = "",
 }: CompensationModalProps) {
   const { settings } = useSettings();
+  const { getCodeFromDisplayText: getCostCenterCode, getDisplayTextFromCode: getCostCenterDisplay } = useCostCenterSearch();
+  const { getAccountFromDisplayText: getActivityAccount, getDisplayTextFromAccount: getActivityDisplay } = useActivityTypeSearch();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     "Upplagd av": settings.organization?.contactPerson || "",
     "Avser Mån/år": "",
     Ledare: defaultPersonName,
+    "employee_id": "",
     Kostnadsställe: "",
     Aktivitetstyp: "",
     Antal: 1,
@@ -61,13 +68,14 @@ export function CompensationModal({
   useEffect(() => {
     if (isOpen) {
       if (compensation) {
-        // Editing existing compensation
+        // Editing existing compensation - convert stored codes back to display text
         setFormData({
           "Upplagd av": compensation["Upplagd av"] || "",
           "Avser Mån/år": compensation["Avser Mån/år"] || "",
           Ledare: compensation.Ledare || "",
-          Kostnadsställe: compensation.Kostnadsställe || "",
-          Aktivitetstyp: compensation.Aktivitetstyp || "",
+          "employee_id": compensation.employee_id || "",
+          Kostnadsställe: getCostCenterDisplay(compensation.Kostnadsställe || ""),
+          Aktivitetstyp: getActivityDisplay(compensation.Aktivitetstyp || ""),
           Antal: compensation.Antal || 1,
           Ersättning: compensation.Ersättning || 0,
           "Datum utbet": compensation["Datum utbet"] || "",
@@ -79,6 +87,7 @@ export function CompensationModal({
           "Upplagd av": settings.organization?.contactPerson || "",
           "Avser Mån/år": "",
           Ledare: defaultPersonName,
+          "employee_id": "",
           Kostnadsställe: "",
           Aktivitetstyp: "",
           Antal: 1,
@@ -153,16 +162,22 @@ export function CompensationModal({
     try {
       const totalCompensation = calculateTotal();
 
+      // Convert display texts back to codes/accounts for storage
+      const submissionData = {
+        ...formData,
+        Kostnadsställe: getCostCenterCode(formData.Kostnadsställe),
+        Aktivitetstyp: getActivityAccount(formData.Aktivitetstyp),
+        "Total ersättning": totalCompensation,
+      };
+
       if (isEditing && compensation) {
         await onSave({
           ...compensation,
-          ...formData,
-          "Total ersättning": totalCompensation,
+          ...submissionData,
         });
       } else {
         await onSave({
-          ...formData,
-          "Total ersättning": totalCompensation,
+          ...submissionData,
           "Fortnox status": "pending",
         });
       }
@@ -256,12 +271,12 @@ export function CompensationModal({
             <label className="block text-sm font-medium mb-2">
               Aktivitetstyp <span className="text-red-500">*</span>
             </label>
-            <Input
+            <ActivityTypeSearchInput
               value={formData.Aktivitetstyp}
-              onChange={(e) =>
-                setFormData({ ...formData, Aktivitetstyp: e.target.value })
+              onChange={(value) =>
+                setFormData({ ...formData, Aktivitetstyp: value })
               }
-              placeholder="T.ex. Tränararvode, Föreläsning, Ledarskap"
+              placeholder="Skriv för att söka aktivitetstyp..."
             />
           </div>
 

@@ -11,6 +11,16 @@ export async function fetchPersonnel(org: string): Promise<{ data: PersonnelReco
   };
 }
 
+function generateEmployeeId(): string {
+  // Generate a unique 8-character employee ID (letters and numbers)
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 export async function addPersonnel(org: string, person: Partial<PersonnelRecord>): Promise<PersonnelRecord> {
   // Set default values for new fields
   const personWithDefaults = {
@@ -21,6 +31,8 @@ export async function addPersonnel(org: string, person: Partial<PersonnelRecord>
     "Månad": person["Månad"] || 0,
     "Timme": person["Timme"] || 0,
     "Heldag": person["Heldag"] || 0,
+    // Generate employee ID if not provided
+    "fortnox_employee_id": person["fortnox_employee_id"] || generateEmployeeId(),
     ...person,
     // Ensure Aktiv is always true for new persons
     Aktiv: true,
