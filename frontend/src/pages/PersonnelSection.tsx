@@ -10,15 +10,19 @@ import { Plus, Upload, RefreshCw } from "lucide-react";
 import { Header } from "../components/Header";
 import FortnoxPushButton from "../components/FortnoxPushButton";
 import FortnoxBatchErrors from "../components/FortnoxBatchErrors";
-// Fortnox auth status handled by FortnoxPushButton
-import { useRef, useState, useEffect } from "react";
-import { parseSheetToAOA } from "../utils/excelUtils";
-import { ExcelViewer } from "../components/ExcelViewer";
+import { useState, useEffect } from "react";
 import { toast } from "../hooks/use-toast";
 import { PersonnelTable } from "../components/PersonnelTable";
 import { PersonnelForm } from "../components/PersonnelForm";
+import { PersonnelExcelUpload } from "../components/personnel/PersonnelExcelUpload";
+import { PersonnelExcelViewer } from "../components/personnel/PersonnelExcelViewer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 import type { PersonnelRecord, ViewMode } from "../types/personnel";
-import { normalizeDate } from "../utils/excelUtils";
 
 export function PersonnelSection() {
   const [personnel, setPersonnel] = useState<PersonnelRecord[]>([]);
@@ -32,12 +36,9 @@ export function PersonnelSection() {
   >();
   const [formLoading, setFormLoading] = useState(false);
   const [batchErrors, setBatchErrors] = useState<any[]>([]);
-  // Fortnox auth status now handled inside FortnoxPushButton
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [viewerData, setViewerData] = useState<any[][]>([]);
-  const [viewerHeaders, setViewerHeaders] = useState<string[]>([]);
-  const [viewerFileName, setViewerFileName] = useState<string>("");
+  // New state for Excel upload modal
+  const [excelUploadOpen, setExcelUploadOpen] = useState(false);
+  const [excelData, setExcelData] = useState<Partial<PersonnelRecord>[]>([]);
 
   const loadPersonnel = async () => {
     setLoading(true);
@@ -73,10 +74,8 @@ export function PersonnelSection() {
     try {
       if (editingRecord?.id) {
         await updatePersonnel("test_förening", editingRecord.id, data);
-        toast({ description: "Personen har uppdaterats!", variant: "default" });
       } else {
         await addPersonnel("test_förening", data);
-        toast({ description: "Personen har lagts till!", variant: "default" });
       }
 
       setFormOpen(false);
@@ -99,51 +98,117 @@ export function PersonnelSection() {
     await loadPersonnel();
   };
 
-  // Handle Excel viewer close and reset file input
-  const handleViewerClose = () => {
-    setViewerOpen(false);
-    // Reset file input to allow selecting the same file again
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  // New Excel upload handlers
+  const handleExcelUploadOpen = () => {
+    setExcelUploadOpen(true);
+  };
+
+  const handleExcelDataUploaded = (data: Partial<PersonnelRecord>[]) => {
+    setExcelData(data);
+    setViewerOpen(true);
+    setExcelUploadOpen(false);
+  };
+
+  const handleExcelError = (error: string) => {
+    toast({
+      description: error,
+      variant: "destructive",
+    });
+  };
+
+  const handleExcelSave = async (data: Partial<PersonnelRecord>[]) => {
+    if (!data.length) {
+      toast({
+        description: "Ingen data att spara",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Filter out records without email (required field)
+      const validRecords = data.filter(
+        (record) => record["E-post"]
+      );
+
+      if (validRecords.length === 0) {
+        toast({
+          description: "Inga giltiga poster att spara (E-post krävs för alla)",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Process records for add/update based on existing emails
+      const existingEmails = new Set(personnel.map((p) => p["E-post"]));
+      const recordsToAdd: Partial<PersonnelRecord>[] = [];
+      const recordsToUpdate: Partial<PersonnelRecord>[] = [];
+
+      validRecords.forEach((record) => {
+        if (existingEmails.has(record["E-post"]!)) {
+          // Find existing record and update with new data
+          const existingRecord = personnel.find(p => p["E-post"] === record["E-post"]);
+          if (existingRecord) {
+            recordsToUpdate.push({
+              ...record,
+              id: existingRecord.id,
+            });
+          }
+        } else {
+          recordsToAdd.push(record);
+        }
+      });
+
+      // Execute updates and additions
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const record of recordsToUpdate) {
+        try {
+          await updatePersonnel("test_förening", record.id!, record);
+          successCount++;
+        } catch (err) {
+          errorCount++;
+        }
+      }
+
+      for (const record of recordsToAdd) {
+        try {
+          await addPersonnel("test_förening", record);
+          successCount++;
+        } catch (err) {
+          errorCount++;
+        }
+      }
+
+      // Show results
+      if (errorCount === 0) {
+        toast({
+          description: `${successCount} personer har sparats framgångsrikt`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          description: `${successCount} personer sparade, ${errorCount} fel uppstod`,
+          variant: "destructive",
+        });
+      }
+
+      // Reload data and close viewer
+      await loadPersonnel();
+      setViewerOpen(false);
+      setExcelData([]);
+    } catch (err) {
+      toast({
+        description: "Fel vid sparande av Excel-data",
+        variant: "destructive",
+      });
     }
   };
 
-  // Handle file upload and parse
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    parseSheetToAOA(file, {
-      // Help detect header rows by expected personnel-oriented headers
-      expectedHeaders: [
-        "Förnamn",
-        "Efternamn",
-        "E-post",
-        "Personnummer",
-        "Clearingnr",
-        "Bankkonto",
-      ],
-      padRows: true,
-    })
-      .then(({ headers, rows, rowCount }) => {
-        if (!rowCount) {
-          toast({
-            description: "Filen innehåller inte tillräckligt med data",
-            variant: "destructive",
-          });
-          return;
-        }
-        setViewerHeaders(headers);
-        setViewerData(rows);
-        setViewerFileName(file.name);
-        setViewerOpen(true);
-      })
-      .catch(() =>
-        toast({
-          description: "Kunde inte läsa Excel-filen",
-          variant: "destructive",
-        })
-      );
+  const handleExcelCancel = () => {
+    setViewerOpen(false);
+    setExcelData([]);
   };
 
   const handleToggleStatus = async (record: PersonnelRecord) => {
@@ -194,196 +259,6 @@ export function PersonnelSection() {
     }
   };
 
-  // Save from ExcelViewer - convert Excel data to PersonnelRecord format and handle add/update
-  const handleViewerSave = async (data: any[][]) => {
-    if (!data.length || !viewerHeaders.length) {
-      toast({
-        description: "Ingen data att spara",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Convert Excel data to PersonnelRecord format
-      const personnelRecords: Partial<PersonnelRecord>[] = data.map((row) => {
-        const record: Partial<PersonnelRecord> = {};
-
-        viewerHeaders.forEach((header, index) => {
-          const value = row[index];
-
-          // Map CSV headers to PersonnelRecord keys and handle type conversion
-          switch (header) {
-            case "Upplagd av":
-              record["Upplagd av"] = String(value || "Admin");
-              break;
-            case "Personnummer":
-              record["Personnummer"] = String(value || "");
-              break;
-            case "Förnamn":
-              record["Förnamn"] = String(value || "");
-              break;
-            case "Efternamn":
-              record["Efternamn"] = String(value || "");
-              break;
-            case "Clearingnr":
-              record["Clearingnr"] = String(value || "");
-              break;
-            case "Bankkonto":
-              record["Bankkonto"] = String(value || "");
-              break;
-            case "Adress":
-              record["Adress"] = String(value || "");
-              break;
-            case "Postnr":
-              record["Postnr"] = String(value || "");
-              break;
-            case "Postort":
-              record["Postort"] = String(value || "");
-              break;
-            case "E-post":
-              record["E-post"] = String(value || "");
-              break;
-            case "Kostnadsställe":
-              record["Kostnadsställe"] = String(value || "");
-              break;
-            case "Ändringsdag":
-              {
-                const iso = normalizeDate(value);
-                record["Ändringsdag"] = iso || new Date().toISOString().split("T")[0];
-              }
-              break;
-            case "Månad":
-              record["Månad"] = String(parseFloat(value) || 0);
-              break;
-            case "Timme":
-              record["Timme"] = String(parseFloat(value) || 0);
-              break;
-            case "Heldag":
-              record["Heldag"] = String(parseFloat(value) || 0);
-              break;
-            case "Annan":
-              record["Annan"] = String(value || "");
-              break;
-            case "Kommentar":
-              record["Kommentar"] = String(value || "");
-              break;
-          }
-        });
-
-        // Set default values for required fields
-        record.Aktiv = true; // New persons are always active
-        record.Befattning = record.Befattning || "";
-        record["Skattesats"] = record["Skattesats"] || 30;
-        record["Sociala Avgifter"] =
-          record["Sociala Avgifter"] !== undefined
-            ? record["Sociala Avgifter"]
-            : true;
-        record.added_to_fortnox = false;
-        record.fortnox_employee_id = "";
-
-        return record;
-      });
-
-      // Filter out records without email (required field)
-      const validRecords = personnelRecords.filter(
-        (record) => record["E-post"]
-      );
-
-      if (validRecords.length === 0) {
-        toast({
-          description: "Inga giltiga poster hittades (E-post krävs)",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Process records for add/update based on existing emails
-      const existingEmails = new Set(personnel.map((p) => p["E-post"]));
-      const recordsToAdd: Partial<PersonnelRecord>[] = [];
-      const recordsToUpdate: Partial<PersonnelRecord>[] = [];
-
-      validRecords.forEach((record) => {
-        if (existingEmails.has(record["E-post"]!)) {
-          // Find existing person and merge data, preserving fields not in Excel
-          const existingPerson = personnel.find(
-            (p) => p["E-post"] === record["E-post"]
-          );
-          if (existingPerson) {
-            // Create merged record that preserves existing fields not in Excel
-            const mergedRecord: Partial<PersonnelRecord> = {
-              ...existingPerson,
-            };
-
-            // Only update fields that are present in the Excel headers
-            viewerHeaders.forEach((header) => {
-              if (record[header as keyof PersonnelRecord] !== undefined) {
-                (mergedRecord as any)[header] =
-                  record[header as keyof PersonnelRecord];
-              }
-            });
-
-            mergedRecord.id = existingPerson.id;
-            recordsToUpdate.push(mergedRecord);
-          }
-        } else {
-          recordsToAdd.push(record);
-        }
-      });
-
-      // Process additions and updates
-      let addedCount = 0;
-      let updatedCount = 0;
-      const errors: string[] = [];
-
-      // Add new records
-      for (const record of recordsToAdd) {
-        try {
-          await addPersonnel("test_förening", record);
-          addedCount++;
-        } catch (err) {
-          errors.push(
-            `Kunde inte lägga till ${record["Förnamn"]} ${record["Efternamn"]}: ${err}`
-          );
-        }
-      }
-
-      // Update existing records
-      for (const record of recordsToUpdate) {
-        try {
-          if (record.id) {
-            await updatePersonnel("test_förening", record.id, record);
-            updatedCount++;
-          }
-        } catch (err) {
-          errors.push(
-            `Kunde inte uppdatera ${record["Förnamn"]} ${record["Efternamn"]}: ${err}`
-          );
-        }
-      }
-
-      // Show results
-      let message = "";
-      if (addedCount > 0) message += `${addedCount} personer tillagda. `;
-      if (updatedCount > 0) message += `${updatedCount} personer uppdaterade. `;
-      if (errors.length > 0) message += `${errors.length} fel uppstod.`;
-
-      toast({
-        description: message || "Inga ändringar gjordes",
-        variant: errors.length > 0 ? "destructive" : "default",
-      });
-
-      // Reload data and close viewer
-      await loadPersonnel();
-      handleViewerClose();
-    } catch (err) {
-      toast({
-        description: "Fel vid bearbetning av Excel-data",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <>
       <Header />
@@ -396,14 +271,6 @@ export function PersonnelSection() {
             </p>
           </div>
           <div className="flex items-center space-x-2">
-            <input
-              type="file"
-              accept=".xlsx,.xls"
-              ref={fileInputRef}
-              style={{ display: "none" }}
-              onChange={handleFileInput}
-            />
-
             <RefreshCw
               className={`h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground transition ${
                 loading ? "animate-spin" : ""
@@ -414,7 +281,7 @@ export function PersonnelSection() {
             <Button
               variant="outline"
               className="border-border"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={handleExcelUploadOpen}
             >
               <Upload className="mr-2 h-4 w-4" />
               Ladda upp fil
@@ -454,17 +321,38 @@ export function PersonnelSection() {
           loading={formLoading}
         />
 
-        {/* ExcelViewer Dialog */}
-        {viewerOpen && (
-          <ExcelViewer
-            data={viewerData}
-            headers={viewerHeaders}
-            fileName={viewerFileName}
-            isOpen={viewerOpen}
-            onClose={handleViewerClose}
-            onSave={handleViewerSave}
-          />
-        )}
+        {/* Excel Upload Modal */}
+        <Dialog open={excelUploadOpen} onOpenChange={setExcelUploadOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+            <DialogHeader>
+              <DialogTitle>Ladda upp Personal Excel-fil</DialogTitle>
+            </DialogHeader>
+            <PersonnelExcelUpload
+              onDataUploaded={handleExcelDataUploaded}
+              onError={handleExcelError}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Excel Viewer Modal */}
+        <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
+          <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogHeader className="flex-shrink-0">
+              <DialogTitle>Granska och redigera Personal Excel-data</DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-hidden min-h-0">
+              {excelData.length > 0 && (
+                <PersonnelExcelViewer
+                  data={excelData}
+                  personnelList={personnel}
+                  onSave={handleExcelSave}
+                  onCancel={handleExcelCancel}
+                  loading={loading}
+                />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
