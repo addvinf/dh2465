@@ -2,15 +2,17 @@ import React, { useEffect, useState } from "react";
 import { Button } from "./ui/Button";
 import fortnoxLogo from "../assets/fortnox_logo.png";
 import { pushEmployeesBatch } from "../services/fortnoxEmployeesService";
+import { pushCompensationsBatch } from "../services/compensationService";
 import { toast } from "../hooks/use-toast";
 import { checkFortnoxAuthStatus, initiateFortnoxLogin } from "../services/fortnoxService";
 
 interface FortnoxPushButtonProps {
   onComplete?: (result: { failures: number; successes: number; items: any[] }) => void | Promise<void>;
   className?: string;
+  mode?: "personnel" | "compensation";
 }
 
-export const FortnoxPushButton: React.FC<FortnoxPushButtonProps> = ({ onComplete, className }) => {
+export const FortnoxPushButton: React.FC<FortnoxPushButtonProps> = ({ onComplete, className, mode = "personnel" }) => {
   const [pushing, setPushing] = useState(false);
   const [checking, setChecking] = useState(true);
   const [authorized, setAuthorized] = useState<boolean>(false);
@@ -38,10 +40,15 @@ export const FortnoxPushButton: React.FC<FortnoxPushButtonProps> = ({ onComplete
     if (!authorized || checking || pushing) return;
     setPushing(true);
     try {
-      toast({ description: "Startar export till Fortnox..." });
-      const result = await pushEmployeesBatch({ dryRun: false });
+      const entityType = mode === "compensation" ? "ersättningar" : "personal";
+      toast({ description: `Startar export av ${entityType} till Fortnox...` });
+      
+      const result = mode === "compensation" 
+        ? await pushCompensationsBatch({ dryRun: false })
+        : await pushEmployeesBatch({ dryRun: false });
+      
       if (result.failures === 0) {
-        toast({ description: `Export klar: ${result.successes} st skickade.` });
+        toast({ description: `Export klar: ${result.successes} ${entityType} skickade.` });
       } else {
         toast({ description: `Delvis klar: ${result.successes} ok, ${result.failures} fel.`, variant: "destructive" });
       }

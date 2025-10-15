@@ -105,6 +105,43 @@ export function CompensationModal({
     settings.organization?.contactPerson,
   ]);
 
+  // Auto-populate Ersättning when Ledare and Aktivitetstyp change
+  useEffect(() => {
+    // Only auto-populate for new compensations, not when editing
+    if (compensation) return;
+    
+    // Only auto-populate if both Ledare and Aktivitetstyp are set
+    if (!formData.Ledare || !formData.Aktivitetstyp) return;
+
+    // Get the activity code (account number)
+    const activityCode = getActivityAccount(formData.Aktivitetstyp);
+    
+    // Find the person's record
+    const person = findPersonByName(formData.Ledare);
+    if (!person) return;
+
+    // Auto-populate based on activity code
+    let autoAmount: number | null = null;
+    
+    if (activityCode === "112") {
+      // Use Timme (hourly rate)
+      const timme = person.record.Timme;
+      autoAmount = timme ? Number(timme) : null;
+    } else if (activityCode === "113") {
+      // Use Heldag (full day rate)
+      const heldag = person.record.Heldag;
+      autoAmount = heldag ? Number(heldag) : null;
+    }
+
+    // Only update if we found a valid amount and current Ersättning is 0
+    if (autoAmount !== null && !isNaN(autoAmount) && formData.Ersättning === 0) {
+      setFormData(prev => ({
+        ...prev,
+        Ersättning: autoAmount,
+      }));
+    }
+  }, [formData.Ledare, formData.Aktivitetstyp, compensation, findPersonByName, getActivityAccount]);
+
   const calculateTotal = () => {
     return formData.Antal * formData.Ersättning;
   };

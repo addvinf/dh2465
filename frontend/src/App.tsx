@@ -43,54 +43,38 @@ const App = () => (
                 <Route path="/auth/callback" element={<AuthCallback />} />
 
                 {/* Protected routes */}
-                <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute>
-                      <FrontPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute requiredRole={["admin", "manager"]}>
-                      <AdminPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/personal"
-                  element={
-                    <ProtectedRoute>
-                      <PersonnelSection />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/kompensation"
-                  element={
-                    <ProtectedRoute>
-                      <LonerPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/monthly"
-                  element={
-                    <ProtectedRoute>
-                      <MontlyRetainerPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/settings"
-                  element={
-                    <ProtectedRoute>
-                      <SettingsSection />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Front page - admin only access */}
+                <Route path="/" element={
+                  <ProtectedRoute adminOnly={true}>
+                    <FrontPage />
+                  </ProtectedRoute>
+                } />
+                {/* Admin-only routes */}
+                <Route path="/admin" element={
+                  <ProtectedRoute adminOnly={true}>
+                    <AdminPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/personal" element={
+                  <ProtectedRoute adminOnly={true}>
+                    <PersonnelSection />
+                  </ProtectedRoute>
+                } />
+                <Route path="/kompensation" element={
+                  <ProtectedRoute adminOnly={true}>
+                    <LonerPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/monthly" element={
+                  <ProtectedRoute adminOnly={true}>
+                    <MontlyRetainerPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute adminOnly={true}>
+                    <SettingsSection />
+                  </ProtectedRoute>
+                } />
 
                 {/* 404 */}
                 <Route path="*" element={<NotFound />} />

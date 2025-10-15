@@ -87,14 +87,29 @@ app.use(express.json());
 // Public routes
 app.use("/", helloWorldRouter);
 app.use("/auth", authRouter);
-app.use("/fortnox-auth", fortnoxAuthRouter);
-app.use("/fortnox-compensations", fortnoxCompensationsRouter);
 
-// Protected routes - require authentication
-app.use("/supabase-example", authenticateToken, supabaseExampleRouter);
-app.use("/api", authenticateToken, orgDataRouter);
-app.use("/api", authenticateToken, settingsRouter);
-app.use("/fortnox-employees", authenticateToken, requireRole(['admin', 'manager']), fortnoxEmployeesRouter);
+// Fortnox OAuth callback must be public (called by Fortnox, not authenticated users)
+// Apply conditional authentication middleware
+app.use("/fortnox-auth", (req, res, next) => {
+  // Skip auth for callback route
+  if (req.path === '/callback' || req.path.startsWith('/callback?')) {
+    return next();
+  }
+  // Apply auth for all other fortnox-auth routes
+  authenticateToken(req, res, (err) => {
+    if (err) return next(err);
+    requireRole(['admin'])(req, res, next);
+  });
+});
+app.use("/fortnox-auth", fortnoxAuthRouter);
+
+
+// Protected routes - require authentication and admin role
+app.use("/supabase-example", authenticateToken, requireRole(['admin']), supabaseExampleRouter);
+app.use("/api", authenticateToken, requireRole(['admin']), orgDataRouter);
+app.use("/api", authenticateToken, requireRole(['admin']), settingsRouter);
+app.use("/fortnox-employees", authenticateToken, requireRole(['admin']), fortnoxEmployeesRouter);
+app.use("/fortnox-compensations", authenticateToken, requireRole(['admin']), fortnoxCompensationsRouter);
 
 // Simple config status endpoint
 app.get("/supabase/health", (req, res) => {

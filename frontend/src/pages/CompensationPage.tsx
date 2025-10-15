@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Download, Upload, Send } from "lucide-react";
+import { Download, Upload } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import {
   Card,
@@ -27,6 +27,8 @@ import { CompensationViewToggle } from "../components/compensation/Features/Comp
 import { CompensationModal } from "../components/compensation/CompensationModal";
 import { CompensationExcelUpload } from "../components/compensation/CompensationExcelUpload";
 import { CompensationExcelViewer } from "../components/compensation/CompensationExcelViewer";
+import { FortnoxPushButton } from "../components/FortnoxPushButton";
+import { FortnoxBatchErrors } from "../components/FortnoxBatchErrors";
 import type {
   CompensationRecord,
   CompensationViewMode,
@@ -275,12 +277,21 @@ export function LonerPage() {
               <Download className="h-4 w-4 mr-2" />
               Exportera Excel
             </Button>
-            <Button variant="outline" size="sm">
-              <Send className="h-4 w-4 mr-2" />
-              Skicka till Fortnox
-            </Button>
+            <FortnoxPushButton 
+              mode="compensation"
+              onComplete={async (result) => {
+                const errors = result.items.filter((item: any) => item.error);
+                setBatchErrors(errors);
+                await loadCompensations();
+              }}
+            />
           </div>
         </div>
+
+        {/* Batch Errors Display */}
+        {batchErrors.length > 0 && (
+          <FortnoxBatchErrors errors={batchErrors} />
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
