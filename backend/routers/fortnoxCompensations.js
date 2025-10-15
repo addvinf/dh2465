@@ -46,17 +46,7 @@ function mapCompensationToFortnoxSalaryTransaction(row) {
   const costCenter = (row['Kostnadsställe'] || '').trim() || undefined;
   const salaryCode = (row['Aktivitetstyp'] || '').trim() || undefined;
   const quantity = (row['Antal'] || '').trim() || '';
-  const comment = (row['Eventuell kommentar'] || '').trim() || '';
-  
-  // Build TextRow from quantity and comment (max 40 chars)
-  let textRow = '';
-  if (quantity && comment) {
-    textRow = `${quantity} - ${comment}`.substring(0, 40);
-  } else if (quantity) {
-    textRow = quantity.substring(0, 40);
-  } else if (comment) {
-    textRow = comment.substring(0, 40);
-  }
+  const TextRow = ((row['Eventuell kommentar'] || '').trim() || '').substring(0, 40);
 
   const transaction = {
     EmployeeId: employeeId,
@@ -67,7 +57,8 @@ function mapCompensationToFortnoxSalaryTransaction(row) {
 
   // Add optional fields only if they have values
   if (costCenter) transaction.CostCenter = costCenter;
-  if (textRow) transaction.TextRow = textRow;
+  if (quantity) transaction.Number = quantity;
+  if (TextRow) transaction.TextRow = TextRow;
 
   // Remove undefined fields
   Object.keys(transaction).forEach((k) => {
