@@ -117,7 +117,7 @@ export function Header() {
                       onClick={() => setNavOpen(false)}
                     >
                       <div className="flex flex-col text-left">
-                        <span>Kompensation</span>
+                        <span>Löner</span>
                         <span className="text-xs text-muted-foreground">
                           Se och exportera kompensationsdata
                         </span>

@@ -26,11 +26,15 @@ export async function addPersonnel(org: string, person: Partial<PersonnelRecord>
     Aktiv: true,
   };
 
-  return await apiService.post<PersonnelRecord>(`/api/org/${encodeURIComponent(org)}/personnel`, personWithDefaults);
+  await apiService.post(`/api/org/${encodeURIComponent(org)}/personnel`, personWithDefaults);
+  // Backend returns { table, inserted: 1 }, not the created record
+  return { ...personWithDefaults, id: crypto.randomUUID() } as PersonnelRecord;
 }
 
 export async function updatePersonnel(org: string, id: string, person: Partial<PersonnelRecord>): Promise<PersonnelRecord> {
-  return await apiService.patch<PersonnelRecord>(`/api/org/${encodeURIComponent(org)}/personnel/${id}`, person);
+  await apiService.patch(`/api/org/${encodeURIComponent(org)}/personnel/${id}`, person);
+  // Backend returns { table, id, updated: 1 }, not the updated record
+  return { ...person, id } as PersonnelRecord;
 }
 
 export async function togglePersonnelStatus(org: string, id: string): Promise<PersonnelRecord> {
