@@ -13,6 +13,9 @@ import orgDataRouter from "./routers/orgData.js";
 import settingsRouter from "./routers/settings.js";
 import fortnoxEmployeesRouter from "./routers/fortnoxEmployees.js";
 import fortnoxAuthRouter from "./routers/fortnoxAuth.js";
+import fortnoxCompensationsRouter from "./routers/fortnoxCompensations.js";
+import cors from "cors";
+import session from 'express-session';
 import authRouter from "./routers/auth.js";
 import { authenticateToken, requireRole } from "./middleware/auth.js";
 
@@ -87,6 +90,7 @@ app.use(express.json());
 app.use("/", helloWorldRouter);
 app.use("/auth", authRouter);
 app.use("/fortnox-auth", fortnoxAuthRouter);
+app.use("/fortnox-compensations", fortnoxCompensationsRouter);
 
 // Protected routes - require authentication
 app.use("/supabase-example", authenticateToken, supabaseExampleRouter);
