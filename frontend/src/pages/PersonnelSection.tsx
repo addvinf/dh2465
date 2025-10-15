@@ -20,6 +20,16 @@ import { PersonnelForm } from "../components/PersonnelForm";
 import type { PersonnelRecord, ViewMode } from "../types/personnel";
 import { normalizeDate } from "../utils/excelUtils";
 
+// Generate unique employee ID
+function generateEmployeeId(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 export function PersonnelSection() {
   const [personnel, setPersonnel] = useState<PersonnelRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -280,7 +290,11 @@ export function PersonnelSection() {
             ? record["Sociala Avgifter"]
             : true;
         record.added_to_fortnox = false;
-        record.fortnox_employee_id = "";
+        
+        // Generate employee ID if not already set (for new personnel)
+        if (!record.fortnox_employee_id) {
+          record.fortnox_employee_id = generateEmployeeId();
+        }
 
         return record;
       });

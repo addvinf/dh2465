@@ -8,6 +8,7 @@ import {
 } from "../../ui/select";
 import { PersonnelSearchInput } from "../../personnel/PersonnelPopup/PersonnelSearchInput";
 import { CostCenterSearchInput } from "../../costcenter/CostCenterSearchInput";
+import { ActivityTypeSearchInput } from "../../activitytype/ActivityTypeSearchInput";
 import { useSettings } from "../../../contexts/SettingsContext";
 
 interface CompensationFormFieldProps {
@@ -18,6 +19,7 @@ interface CompensationFormFieldProps {
     | "month-select"
     | "cost-center-select"
     | "cost-center-search"
+    | "activity-type-search"
     | "personnel-select";
   value: string | number;
   onChange: (value: string | number) => void;
@@ -25,6 +27,7 @@ interface CompensationFormFieldProps {
   min?: string;
   step?: string;
   className?: string;
+  useTooltip?: boolean; // Add tooltip support for table usage
 }
 
 const baseInputClasses =
@@ -38,6 +41,7 @@ export function CompensationFormField({
   min,
   step,
   className = "",
+  useTooltip = false, // Add tooltip support
 }: CompensationFormFieldProps) {
   const { settings } = useSettings();
 
@@ -149,6 +153,18 @@ export function CompensationFormField({
           onChange={(val) => onChange(val)}
           placeholder={placeholder || "Skriv för att söka kostnadsställe..."}
           className={`${baseInputClasses} ${className}`}
+        />
+      );
+
+    case "activity-type-search":
+      return (
+        <ActivityTypeSearchInput
+          value={value as string}
+          onChange={(val) => onChange(val)}
+          placeholder={placeholder || "Skriv för att söka aktivitetstyp..."}
+          className={`${baseInputClasses} ${className}`}
+          hideError={useTooltip}
+          useTooltip={useTooltip}
         />
       );
 
