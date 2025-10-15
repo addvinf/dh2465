@@ -11,6 +11,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { CostCenterSearchInput } from "../costcenter/CostCenterSearchInput";
 import { ActivityTypeSearchInput } from "../activitytype/ActivityTypeSearchInput";
+import { PersonnelSearchInput } from "../personnel/PersonnelPopup/PersonnelSearchInput";
 import { useSettings } from "../../contexts/SettingsContext";
 import { useCostCenterSearch } from "../../hooks/useCostCenterSearch";
 import { useActivityTypeSearch } from "../../hooks/useActivityTypeSearch";
@@ -244,12 +245,12 @@ export function CompensationModal({
               <label className="block text-sm font-medium mb-2">
                 Ledare <span className="text-red-500">*</span>
               </label>
-              <Input
+              <PersonnelSearchInput
                 value={formData.Ledare}
-                onChange={(e) =>
-                  setFormData({ ...formData, Ledare: e.target.value })
+                onChange={(value) =>
+                  setFormData({ ...formData, Ledare: value })
                 }
-                placeholder="Namn på ledare"
+                placeholder="Skriv för att söka personal..."
               />
             </div>
 

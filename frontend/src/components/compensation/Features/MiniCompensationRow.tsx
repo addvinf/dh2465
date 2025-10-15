@@ -1,25 +1,11 @@
-import { useState } from "react";
 import { TableRow, TableCell } from "../../ui/table";
 import { StatusDot } from "./StatusDot";
 import { CompensationRowActions } from "./CompensationRowActions";
-import { CompensationFormField } from "./CompensationFormField";
 import type { CompensationRecord } from "../../../types/compensation";
-
-interface CompensationFormData {
-  "Upplagd av": string;
-  "Avser Mån/år": string;
-  Ledare: string;
-  Kostnadsställe: string;
-  Aktivitetstyp: string;
-  Antal: number;
-  Ersättning: number;
-  "Datum utbet": string;
-  "Eventuell kommentar": string;
-}
 
 interface MiniCompensationRowProps {
   compensation: CompensationRecord;
-  onEdit: (id: string, updates: Partial<CompensationRecord>) => void;
+  onEdit: (compensation: CompensationRecord) => void;
   onDelete: (id: string) => void;
   formatCurrency: (amount: number) => string;
   calculateTotal: (antal: number, ersattning: number) => number;
@@ -32,74 +18,8 @@ export function MiniCompensationRow({
   formatCurrency,
   calculateTotal,
 }: MiniCompensationRowProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<CompensationFormData>({
-    "Upplagd av": compensation["Upplagd av"] || "",
-    "Avser Mån/år": compensation["Avser Mån/år"] || "",
-    Ledare: compensation.Ledare || "",
-    Kostnadsställe: compensation.Kostnadsställe || "",
-    Aktivitetstyp: compensation.Aktivitetstyp || "",
-    Antal: compensation.Antal || 0,
-    Ersättning: compensation.Ersättning || 0,
-    "Datum utbet": compensation["Datum utbet"] || "",
-    "Eventuell kommentar": compensation["Eventuell kommentar"] || "",
-  });
-
-  const updateFormField = (
-    field: keyof CompensationFormData,
-    value: string | number
-  ) => {
-    setFormData({ ...formData, [field]: value });
-  };
-
   const handleEdit = () => {
-    setFormData({
-      "Upplagd av": compensation["Upplagd av"] || "",
-      "Avser Mån/år": compensation["Avser Mån/år"] || "",
-      Ledare: compensation.Ledare || "",
-      Kostnadsställe: compensation.Kostnadsställe || "",
-      Aktivitetstyp: compensation.Aktivitetstyp || "",
-      Antal: compensation.Antal || 0,
-      Ersättning: compensation.Ersättning || 0,
-      "Datum utbet": compensation["Datum utbet"] || "",
-      "Eventuell kommentar": compensation["Eventuell kommentar"] || "",
-    });
-    setIsEditing(true);
-  };
-
-  const handleSave = async () => {
-    try {
-      const totalCompensation = calculateTotal(
-        formData.Antal,
-        formData.Ersättning
-      );
-
-      const updates: Partial<CompensationRecord> = {
-        ...formData,
-        "Total ersättning": totalCompensation,
-      };
-
-      await onEdit(compensation.id!, updates);
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Failed to save compensation:", error);
-      alert("Kunde inte spara ersättning");
-    }
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setFormData({
-      "Upplagd av": compensation["Upplagd av"] || "",
-      "Avser Mån/år": compensation["Avser Mån/år"] || "",
-      Ledare: compensation.Ledare || "",
-      Kostnadsställe: compensation.Kostnadsställe || "",
-      Aktivitetstyp: compensation.Aktivitetstyp || "",
-      Antal: compensation.Antal || 0,
-      Ersättning: compensation.Ersättning || 0,
-      "Datum utbet": compensation["Datum utbet"] || "",
-      "Eventuell kommentar": compensation["Eventuell kommentar"] || "",
-    });
+    onEdit(compensation);
   };
 
   const handleDelete = () => {
@@ -107,92 +27,6 @@ export function MiniCompensationRow({
       onDelete(compensation.id!);
     }
   };
-
-  if (isEditing) {
-    return (
-      <TableRow className="bg-muted/50 h-10">
-        <TableCell className="p-1 w-8" align="center">
-          <StatusDot status="pending" />
-        </TableCell>
-        <TableCell className="py-2 p-1">
-          <CompensationFormField
-            type="text"
-            value={formData["Upplagd av"]}
-            onChange={(value) => updateFormField("Upplagd av", value)}
-          />
-        </TableCell>
-        <TableCell className="py-2 p-1">
-          <CompensationFormField
-            type="month-select"
-            value={formData["Avser Mån/år"]}
-            onChange={(value) => updateFormField("Avser Mån/år", value)}
-          />
-        </TableCell>
-        <TableCell className="py-2 p-1">
-          <CompensationFormField
-            type="cost-center-search"
-            value={formData.Kostnadsställe}
-            onChange={(value) => updateFormField("Kostnadsställe", value)}
-          />
-        </TableCell>
-        <TableCell className="py-2 p-1">
-          <CompensationFormField
-            type="text"
-            value={formData.Aktivitetstyp}
-            onChange={(value) => updateFormField("Aktivitetstyp", value)}
-          />
-        </TableCell>
-        <TableCell className="py-2 p-1">
-          <CompensationFormField
-            type="number"
-            value={formData.Antal}
-            onChange={(value) => updateFormField("Antal", value)}
-            min="0"
-            step="1"
-          />
-        </TableCell>
-        <TableCell className="py-2 p-1">
-          <CompensationFormField
-            type="number"
-            value={formData.Ersättning}
-            onChange={(value) => updateFormField("Ersättning", value)}
-            min="0"
-            step="1"
-          />
-        </TableCell>
-        <TableCell className="py-2 p-1">
-          <span className="font-medium text-xs">
-            {formatCurrency(
-              calculateTotal(formData.Antal, formData.Ersättning)
-            )}
-          </span>
-        </TableCell>
-        <TableCell className="py-2 p-1">
-          <CompensationFormField
-            type="date"
-            value={formData["Datum utbet"]}
-            onChange={(value) => updateFormField("Datum utbet", value)}
-          />
-        </TableCell>
-        <TableCell className="py-2 p-1">
-          <CompensationFormField
-            type="text"
-            value={formData["Eventuell kommentar"]}
-            onChange={(value) => updateFormField("Eventuell kommentar", value)}
-          />
-        </TableCell>
-        <TableCell className="py-2 sticky right-0">
-          <CompensationRowActions
-            isEditing={true}
-            onEdit={handleEdit}
-            onSave={handleSave}
-            onCancel={handleCancel}
-            onDelete={handleDelete}
-          />
-        </TableCell>
-      </TableRow>
-    );
-  }
 
   return (
     <TableRow
@@ -240,8 +74,8 @@ export function MiniCompensationRow({
         <CompensationRowActions
           isEditing={false}
           onEdit={handleEdit}
-          onSave={handleSave}
-          onCancel={handleCancel}
+          onSave={() => {}} // Not used in non-editing mode
+          onCancel={() => {}} // Not used in non-editing mode
           onDelete={handleDelete}
         />
       </TableCell>
