@@ -14,8 +14,6 @@ import settingsRouter from "./routers/settings.js";
 import fortnoxEmployeesRouter from "./routers/fortnoxEmployees.js";
 import fortnoxAuthRouter from "./routers/fortnoxAuth.js";
 import fortnoxCompensationsRouter from "./routers/fortnoxCompensations.js";
-import cors from "cors";
-import session from 'express-session';
 import authRouter from "./routers/auth.js";
 import { authenticateToken, requireRole } from "./middleware/auth.js";
 
