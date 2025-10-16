@@ -67,7 +67,7 @@ export const authService = {
     return response.json();
   },
 
-  async logout(accessToken?: string): Promise<void> {
+  async logout(): Promise<void> {
     try {
       await fetch(`${API_BASE_URL}/auth/logout`, {
         method: 'POST',

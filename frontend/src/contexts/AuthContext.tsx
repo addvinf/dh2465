@@ -221,7 +221,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       if (session) {
-        await authService.logout(session.access_token);
+        await authService.logout();
       }
     } catch (error) {
       console.error('Logout error:', error);

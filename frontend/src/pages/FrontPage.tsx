@@ -4,13 +4,10 @@ import { Button } from "../components/ui/Button";
 import { Header } from "../components/Header";
 import { checkFortnoxAuthStatus, initiateFortnoxLogin } from "../services/fortnoxService";
 import { useToast } from "../components/ui/use-toast";
-import { useAuth } from "../contexts/AuthContext";
-
 const FrontPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
-  const { user } = useAuth();
   const [isFortnoxAuthorized, setIsFortnoxAuthorized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 

@@ -28,7 +28,7 @@ export function MontlyRetainerPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await fetchMonthlyRetainer(org);
+      const result = await fetchMonthlyRetainer(org) as { rows?: any[] };
       setData(result.rows || []);
     } catch (err: any) {
       let message = "Kunde inte hämta månad-data.";
