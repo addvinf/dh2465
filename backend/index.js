@@ -55,7 +55,7 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: 'lax',
-    maxAge: 8 * 60 * 60 * 1000, // 8 hours
+    maxAge: 4 * 60 * 60 * 1000, // 4 hours - More secure session duration
   }
 }));
 
@@ -88,20 +88,18 @@ app.use(express.json());
 app.use("/", helloWorldRouter);
 app.use("/auth", authRouter);
 
-// Fortnox OAuth callback must be public (called by Fortnox, not authenticated users)
-// Apply conditional authentication middleware
+// Fortnox auth routes with conditional authentication
 app.use("/fortnox-auth", (req, res, next) => {
-  // Skip auth for callback route
-  if (req.path === '/callback' || req.path.startsWith('/callback?')) {
+  // Skip authentication for callback endpoint (called by Fortnox)
+  if (req.path === '/callback') {
     return next();
   }
-  // Apply auth for all other fortnox-auth routes
+  // Apply authentication for all other fortnox-auth routes
   authenticateToken(req, res, (err) => {
     if (err) return next(err);
     requireRole(['admin'])(req, res, next);
   });
-});
-app.use("/fortnox-auth", fortnoxAuthRouter);
+}, fortnoxAuthRouter);
 
 
 // Protected routes - require authentication and admin role

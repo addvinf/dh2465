@@ -41,33 +41,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Frontend always enforces authentication
       // Backend DISABLE_AUTH will return mock responses if needed
 
-      // Check for existing secure session
-      const sessionInfo = SecureTokenStorage.getSessionInfo();
-      if (sessionInfo?.isAuthenticated) {
-        try {
-          // Try to get access token and then fetch user profile
-          const accessToken = await SecureTokenStorage.getAccessToken();
-          if (accessToken) {
-            const profileData = await authService.fetchProfile();
-            setUser(profileData.user);
-            
-            // Create session object from stored info
-            const sessionData: AuthSession = {
-              access_token: '', // Token is in httpOnly cookie
-              refresh_token: '', // Token is in httpOnly cookie
-              expires_at: sessionInfo.expires_at
-            };
-            setSession(sessionData);
-          } else {
-            // No token available, clear session
-            await SecureTokenStorage.clearSession();
-          }
-        } catch (error) {
-          console.error('Error loading stored session:', error);
-          // Clear invalid session
-          await SecureTokenStorage.clearSession();
-        }
+      try {
+        // Since we use httpOnly cookies, just try to fetch profile directly
+        // If cookies exist and are valid, this will succeed
+        console.log('AuthContext: Attempting to fetch profile...');
+        const profileData = await authService.fetchProfile();
+        console.log('AuthContext: Profile fetch successful:', profileData);
+        
+        setUser(profileData.user);
+        
+        // Get session info from localStorage for expires_at
+        const sessionInfo = SecureTokenStorage.getSessionInfo();
+        const sessionData: AuthSession = {
+          access_token: '', // Token is in httpOnly cookie
+          refresh_token: '', // Token is in httpOnly cookie
+          expires_at: sessionInfo?.expires_at
+        };
+        setSession(sessionData);
+        
+      } catch (error) {
+        console.log('AuthContext: No valid authentication found:', error instanceof Error ? error.message : 'Unknown error');
+        // Clear any stale session data
+        await SecureTokenStorage.clearSession();
       }
+      
       setIsLoading(false);
     };
 

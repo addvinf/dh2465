@@ -16,10 +16,16 @@ export const authenticateToken = async (req, res, next) => {
   }
 
   try {
+    // Debug: Log cookies and headers
+    console.log('Auth middleware - Cookies received:', req.cookies);
+    console.log('Auth middleware - Authorization header:', req.headers['authorization']);
+    
     // Extract token from request
     const token = TokenUtils.extractTokenFromRequest(req);
+    console.log('Auth middleware - Extracted token:', token ? 'Present' : 'Missing');
 
     if (!token) {
+      console.log('Auth middleware - No token found, returning 401');
       return res.status(401).json({ 
         error: 'Access token required',
         code: 'MISSING_TOKEN'
@@ -27,7 +33,9 @@ export const authenticateToken = async (req, res, next) => {
     }
 
     // Verify token with Supabase
+    console.log('Auth middleware - Attempting to verify token...');
     const user = await TokenUtils.verifyToken(token);
+    console.log('Auth middleware - Token verified successfully, user:', { id: user.id, email: user.email, role: user.role });
 
     // Add verified user info to request
     req.user = user;
@@ -35,7 +43,9 @@ export const authenticateToken = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Authentication error:', error.message);
+    console.error('Authentication error - Full error:', error);
+    console.error('Authentication error - Message:', error.message);
+    console.error('Authentication error - Stack:', error.stack);
     
     // Return appropriate error status based on error type
     if (error.message.includes('expired')) {

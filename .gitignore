@@ -3,3 +3,4 @@ node_modules
 .DS_Store
 .github/
 frontend/comp mock.xlsx
+backend/scripts/
