@@ -42,7 +42,8 @@ const AuthCallback: React.FC = () => {
         localStorage.setItem('authSession', JSON.stringify(sessionData));
 
         // Get user profile with the access token
-        const response = await fetch('http://localhost:3000/auth/profile', {
+        const API_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:3000';
+        const response = await fetch(`${API_BASE_URL}/auth/profile`, {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
