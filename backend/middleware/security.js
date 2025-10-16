@@ -1,6 +1,14 @@
 /**
  * Security Middleware
  * Centralized security headers and protection middleware
+ * 
+ * SECURITY NOTE: This app uses sameSite: 'none' cookies for cross-origin auth.
+ * This is necessary for separate frontend/backend domains but requires extra protection:
+ * - CORS is strictly configured to allowed origins only
+ * - Origin validation in auth middleware
+ * - httpOnly cookies prevent XSS access
+ * - secure flag requires HTTPS
+ * - JWT tokens provide additional verification
  */
 
 /**
@@ -56,7 +64,8 @@ export const httpsEnforcement = (req, res, next) => {
 export const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? [
-        process.env.FRONTEND_URL || 'https://yourdomain.com',
+        process.env.FRONTEND_URL || 'https://dh2465.vercel.app',
+        'https://dh2465.vercel.app', // Your Vercel frontend
         // Add other production domains here
       ]
     : [
@@ -67,7 +76,7 @@ export const corsOptions = {
       ],
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type', 
     'Authorization', 

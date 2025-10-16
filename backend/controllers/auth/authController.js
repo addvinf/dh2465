@@ -108,20 +108,23 @@ export class AuthController {
       }
 
       // Set secure httpOnly cookies
-      res.cookie('auth_access_token', access_token, {
+      // For cross-origin requests (prod: vercel.app -> render.com), we need sameSite: 'none'
+      const isProduction = process.env.NODE_ENV === 'production';
+      const cookieOptions = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility
-        path: '/', // Ensure cookie is available on all paths
+        secure: isProduction, // Must be true when sameSite is 'none'
+        sameSite: isProduction ? 'none' : 'lax', // 'none' allows cross-origin, 'lax' for local dev
+        path: '/',
+      };
+      
+      res.cookie('auth_access_token', access_token, {
+        ...cookieOptions,
         maxAge: accessTokenMaxAge
       });
 
       res.cookie('auth_refresh_token', refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility
-        path: '/', // Ensure cookie is available on all paths
-        maxAge: 4 * 3600000 // 4 hours - More secure than 7 days
+        ...cookieOptions,
+        maxAge: 4 * 3600000 // 4 hours
       });
 
       return res.json({

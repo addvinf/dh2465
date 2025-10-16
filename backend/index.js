@@ -47,15 +47,16 @@ app.use(securityHeaders);
 app.use(httpsEnforcement);
 
 // Configure sessions
+const isProduction = process.env.NODE_ENV === 'production';
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 4 * 60 * 60 * 1000, // 4 hours - More secure session duration
+    sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-origin in production
+    maxAge: 4 * 60 * 60 * 1000, // 4 hours
   }
 }));
 
