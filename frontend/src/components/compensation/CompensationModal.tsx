@@ -10,11 +10,11 @@ import {
 } from "../ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { CostCenterSearchInput } from "../costcenter/CostCenterSearchInput";
-import { ActivityTypeSearchInput } from "../activitytype/ActivityTypeSearchInput";
+import { SalaryTypeSearchInput } from "../salarytype/SalaryTypeSearchInput";
 import { PersonnelSearchInput } from "../personnel/PersonnelPopup/PersonnelSearchInput";
 import { useSettings } from "../../contexts/SettingsContext";
 import { useCostCenterSearch } from "../../hooks/useCostCenterSearch";
-import { useActivityTypeSearch } from "../../hooks/useActivityTypeSearch";
+import { useSalaryTypeSearch } from "../../hooks/useSalaryTypeSearch";
 import type { CompensationRecord } from "../../types/compensation";
 
 interface CompensationModalProps {
@@ -49,7 +49,7 @@ export function CompensationModal({
 }: CompensationModalProps) {
   const { settings } = useSettings();
   const { getCodeFromDisplayText: getCostCenterCode, getDisplayTextFromCode: getCostCenterDisplay } = useCostCenterSearch();
-  const { getAccountFromDisplayText: getActivityAccount, getDisplayTextFromAccount: getActivityDisplay } = useActivityTypeSearch();
+  const { getCodeFromDisplayText: getSalaryTypeCode, getDisplayTextFromCode: getSalaryTypeDisplay } = useSalaryTypeSearch();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     "Upplagd av": settings.organization?.contactPerson || "",
@@ -76,7 +76,7 @@ export function CompensationModal({
           Ledare: compensation.Ledare || "",
           "employee_id": compensation.employee_id || "",
           Kostnadsställe: getCostCenterDisplay(compensation.Kostnadsställe || ""),
-          Aktivitetstyp: getActivityDisplay(compensation.Aktivitetstyp || ""),
+          Aktivitetstyp: getSalaryTypeDisplay(parseInt(compensation.Aktivitetstyp || "0", 10)),
           Antal: compensation.Antal || 1,
           Ersättning: compensation.Ersättning || 0,
           "Datum utbet": compensation["Datum utbet"] || "",
@@ -143,7 +143,7 @@ export function CompensationModal({
     if (!formData.Ledare.trim()) errors.push("Ledare");
     if (!formData["Avser Mån/år"]) errors.push("Månad/år");
     if (!formData.Kostnadsställe) errors.push("Kostnadsställe");
-    if (!formData.Aktivitetstyp.trim()) errors.push("Aktivitetstyp");
+    if (!formData.Aktivitetstyp.trim()) errors.push("Löneart");
     if (formData.Antal <= 0) errors.push("Antal måste vara större än 0");
     if (formData.Ersättning <= 0)
       errors.push("Ersättning måste vara större än 0");
@@ -167,7 +167,7 @@ export function CompensationModal({
       const submissionData = {
         ...formData,
         Kostnadsställe: getCostCenterCode(formData.Kostnadsställe),
-        Aktivitetstyp: getActivityAccount(formData.Aktivitetstyp),
+        Aktivitetstyp: getSalaryTypeCode(formData.Aktivitetstyp).toString(),
         "Total ersättning": totalCompensation,
       };
 
@@ -270,14 +270,14 @@ export function CompensationModal({
 
           <div>
             <label className="block text-sm font-medium mb-2">
-              Aktivitetstyp <span className="text-red-500">*</span>
+              Löneart <span className="text-red-500">*</span>
             </label>
-            <ActivityTypeSearchInput
+            <SalaryTypeSearchInput
               value={formData.Aktivitetstyp}
-              onChange={(value) =>
+              onChange={(value: string) =>
                 setFormData({ ...formData, Aktivitetstyp: value })
               }
-              placeholder="Skriv för att söka aktivitetstyp..."
+              placeholder="Skriv för att söka löneart..."
             />
           </div>
 

@@ -136,3 +136,40 @@ export async function bulkUpdateCompensations(
     throw new Error("Kunde inte genomföra bulk-uppdatering: " + toErrorMessage(error, ""));
   }
 }
+
+export interface CompensationBatchResultItem {
+  id: string;
+  skipped?: boolean;
+  reason?: string;
+  error?: string;
+  details?: any;
+  dryRun?: boolean;
+  created?: unknown;
+  flagUpdated?: boolean;
+  flagError?: string;
+}
+
+export interface CompensationBatchResponse {
+  processed: number;
+  successes: number;
+  failures: number;
+  dryRun: boolean;
+  items: CompensationBatchResultItem[];
+}
+
+/**
+ * Push compensations to Fortnox in batch
+ */
+export async function pushCompensationsBatch(options?: { limit?: number; dryRun?: boolean }): Promise<CompensationBatchResponse> {
+  const params = new URLSearchParams();
+  if (options?.limit !== undefined) params.set('limit', String(options.limit));
+  if (options?.dryRun !== undefined) params.set('dryRun', String(options.dryRun));
+
+  const endpoint = `/fortnox-compensations/batch${params.toString() ? `?${params.toString()}` : ''}`;
+  
+  try {
+    return await apiService.post<CompensationBatchResponse>(endpoint, {});
+  } catch (error) {
+    throw new Error(toErrorMessage(error, 'Batch push failed'));
+  }
+}

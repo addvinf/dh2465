@@ -42,30 +42,52 @@ function mapCompensationToFortnoxSalaryTransaction(row) {
   // Extract and trim all fields
   const employeeId = (row['employee_id'] || '').trim() || undefined;
   const date = getNext25th(); // Always set to next 25th
-  const amount = (row['Ersättning'] || '').trim() || undefined;
+  // Handle amount - convert to number (Fortnox expects numeric type)
+  const rawAmount = row['Ersättning'];
+  console.log('DEBUG rawAmount:', rawAmount, 'type:', typeof rawAmount, 'is null?', rawAmount === null, 'is undefined?', rawAmount === undefined);
+  const amount = rawAmount != null && rawAmount !== '' ? Number(rawAmount) : undefined;
+  
   const costCenter = (row['Kostnadsställe'] || '').trim() || undefined;
-  const salaryCode = (row['Aktivitetstyp'] || '').trim() || undefined;
-  const quantity = (row['Antal'] || '').trim() || '';
+  const salaryCodeFromDB = (row['Aktivitetstyp'] || '').trim() || undefined;
+  
+  // HARDCODE salary code to 112 for testing
+  const salaryCode = "112";
+  console.log('DEBUG salaryCode from DB:', salaryCodeFromDB, '-> hardcoded to:', salaryCode);
+  
+  // Handle quantity - convert to number (Fortnox expects numeric type)
+  const rawQuantity = row['Antal'];
+  const quantity = rawQuantity != null && rawQuantity !== '' ? Number(rawQuantity) : undefined;
+  
   const TextRow = ((row['Eventuell kommentar'] || '').trim() || '').substring(0, 40);
 
+  console.log('DEBUG amount after conversion:', amount, 'type:', typeof amount);
+  console.log('DEBUG quantity after conversion:', quantity, 'type:', typeof quantity);
+  
   const transaction = {
     EmployeeId: employeeId,
     Date: date,
     SalaryCode: salaryCode,
-    Amount: amount,
   };
 
-  // Add optional fields only if they have values
-  if (costCenter) transaction.CostCenter = costCenter;
-  if (quantity) transaction.Number = quantity;
-  if (TextRow) transaction.TextRow = TextRow;
+  console.log('DEBUG transaction BEFORE cleanup:', JSON.stringify(transaction, null, 2));
 
-  // Remove undefined fields
+  // Send Amount and Number like before
+  if (amount) transaction.Amount = amount;
+  if (quantity) transaction.Number = quantity;
+  if (costCenter) transaction.CostCenter = costCenter;
+  if (TextRow) transaction.TextRow = TextRow;
+  
+  console.log('DEBUG Will send - Amount:', transaction.Amount, 'Number:', transaction.Number);
+
+  // Remove undefined fields (but keep 0 values as they are valid numbers)
   Object.keys(transaction).forEach((k) => {
     if (transaction[k] === undefined || transaction[k] === null || transaction[k] === '') {
+      console.log(`DEBUG removing field "${k}" with value:`, transaction[k]);
       delete transaction[k];
     }
   });
+
+  console.log('DEBUG transaction AFTER cleanup:', JSON.stringify(transaction, null, 2));
 
   return transaction;
 }
@@ -114,6 +136,24 @@ async function postFortnoxSalaryTransaction(transaction, req) {
     console.log('Fortnox salary transaction request ->', { method: 'POST', url, headers: sanitized, body: bodyObj });
   }
 
+  // Always log the full API call (with sanitized credentials)
+  const sanitizedHeaders = { ...headers };
+  if (sanitizedHeaders['Authorization']) {
+    const val = String(sanitizedHeaders['Authorization']);
+    const token = val.replace(/^Bearer\s+/i, '');
+    sanitizedHeaders['Authorization'] = token && token.length > 10 ? `Bearer ${token.slice(0, 6)}...${token.slice(-4)}` : 'Bearer ****';
+  }
+  if (sanitizedHeaders['Client-Secret']) {
+    const cs = String(sanitizedHeaders['Client-Secret']);
+    sanitizedHeaders['Client-Secret'] = cs && cs.length > 6 ? `${cs.slice(0, 3)}...${cs.slice(-2)}` : '****';
+  }
+  console.log('=== FORTNOX API CALL ===');
+  console.log('URL:', url);
+  console.log('Method: POST');
+  console.log('Headers:', JSON.stringify(sanitizedHeaders, null, 2));
+  console.log('Body:', JSON.stringify(bodyObj));
+  console.log('========================');
+
   const res = await fetch(url, {
     method: 'POST',
     headers,
@@ -123,6 +163,11 @@ async function postFortnoxSalaryTransaction(transaction, req) {
   const text = await res.text();
   let json;
   try { json = text ? JSON.parse(text) : null; } catch (_) { json = null; }
+
+  console.log('=== FORTNOX API RESPONSE ===');
+  console.log('Status:', res.status);
+  console.log('Response Body:', JSON.stringify(json || text, null, 2));
+  console.log('============================');
 
   if (!res.ok) {
     const errMsg = json && json.Message ? json.Message : text || `HTTP ${res.status}`;

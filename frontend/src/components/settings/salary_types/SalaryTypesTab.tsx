@@ -17,13 +17,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../../ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../ui/select";
 import { Plus, Edit3, Trash2, Save, X } from "lucide-react";
 import { useSettings } from "../../../contexts/SettingsContext";
 import type { SalaryType } from "../../../types/settings";
@@ -36,16 +29,10 @@ interface EditableRowProps {
 }
 
 function EditableRow({ salaryType, onSave, onCancel }: EditableRowProps) {
-  const { settings } = useSettings();
   const [editedSalaryType, setEditedSalaryType] = useState(salaryType);
 
   const handleSave = () => {
-    if (
-      !editedSalaryType.name.trim() ||
-      !editedSalaryType.account ||
-      !editedSalaryType.costCenter ||
-      !editedSalaryType.category
-    ) {
+    if (!editedSalaryType.name.trim() || !editedSalaryType.code) {
       return;
     }
     onSave(editedSalaryType);
@@ -64,74 +51,18 @@ function EditableRow({ salaryType, onSave, onCancel }: EditableRowProps) {
         />
       </TableCell>
       <TableCell>
-        <Select
-          value={editedSalaryType.account}
-          onValueChange={(value) =>
-            setEditedSalaryType({ ...editedSalaryType, account: value })
-          }
-        >
-          <SelectTrigger className="h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {settings.accounts.map((account) => (
-              <SelectItem key={account.id} value={account.accountNumber}>
-                {account.accountNumber} - {account.accountName}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </TableCell>
-      <TableCell>
-        <Select
-          value={editedSalaryType.costCenter}
-          onValueChange={(value) =>
-            setEditedSalaryType({ ...editedSalaryType, costCenter: value })
-          }
-        >
-          <SelectTrigger className="h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {settings.costCenters.map((costCenter) => (
-              <SelectItem key={costCenter.id} value={costCenter.code}>
-                {costCenter.code} - {costCenter.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </TableCell>
-      <TableCell>
-        <Select
-          value={editedSalaryType.category}
-          onValueChange={(value: "sports" | "regular") =>
-            setEditedSalaryType({ ...editedSalaryType, category: value })
-          }
-        >
-          <SelectTrigger className="h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="sports">Idrottsutövare</SelectItem>
-            <SelectItem value="regular">Ordinarie</SelectItem>
-          </SelectContent>
-        </Select>
-      </TableCell>
-      <TableCell>
         <Input
           type="number"
-          value={editedSalaryType.vacationRate || ""}
+          value={editedSalaryType.code}
           onChange={(e) =>
-            setEditedSalaryType({
-              ...editedSalaryType,
-              vacationRate: e.target.value ? parseFloat(e.target.value) : null,
+            setEditedSalaryType({ 
+              ...editedSalaryType, 
+              code: Number(e.target.value) || 0 
             })
           }
-          placeholder="0"
-          step="0.1"
+          placeholder="Kod"
+          className="h-8 w-20"
           min="0"
-          max="50"
-          className="h-8 w-16"
         />
       </TableCell>
       <TableCell>
@@ -153,37 +84,23 @@ interface AddSalaryTypeDialogProps {
 }
 
 function AddSalaryTypeDialog({ onAdd }: AddSalaryTypeDialogProps) {
-  const { settings } = useSettings();
   const [open, setOpen] = useState(false);
   const [newSalaryType, setNewSalaryType] = useState<{
     name: string;
-    account: string;
-    costCenter: string;
-    category: "sports" | "regular";
-    vacationRate: number | null;
+    code: number;
   }>({
     name: "",
-    account: "",
-    costCenter: "",
-    category: "regular",
-    vacationRate: null,
+    code: 0,
   });
 
   const handleAdd = () => {
-    if (
-      !newSalaryType.name.trim() ||
-      !newSalaryType.account ||
-      !newSalaryType.costCenter
-    ) {
+    if (!newSalaryType.name.trim() || !newSalaryType.code) {
       return;
     }
     onAdd(newSalaryType);
     setNewSalaryType({
       name: "",
-      account: "",
-      costCenter: "",
-      category: "regular",
-      vacationRate: null,
+      code: 0,
     });
     setOpen(false);
   };
@@ -191,10 +108,7 @@ function AddSalaryTypeDialog({ onAdd }: AddSalaryTypeDialogProps) {
   const resetForm = () => {
     setNewSalaryType({
       name: "",
-      account: "",
-      costCenter: "",
-      category: "regular",
-      vacationRate: null,
+      code: 0,
     });
   };
 
@@ -218,7 +132,7 @@ function AddSalaryTypeDialog({ onAdd }: AddSalaryTypeDialogProps) {
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium">Namn</label>
+            <label className="text-sm font-medium">Löneart</label>
             <Input
               value={newSalaryType.name}
               onChange={(e) =>
@@ -228,86 +142,22 @@ function AddSalaryTypeDialog({ onAdd }: AddSalaryTypeDialogProps) {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Konto</label>
-            <Select
-              value={newSalaryType.account}
-              onValueChange={(value) =>
-                setNewSalaryType({ ...newSalaryType, account: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Välj konto" />
-              </SelectTrigger>
-              <SelectContent>
-                {settings.accounts.map((account) => (
-                  <SelectItem key={account.id} value={account.accountNumber}>
-                    {account.accountNumber} - {account.accountName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-sm font-medium">Kostnadsställe</label>
-            <Select
-              value={newSalaryType.costCenter}
-              onValueChange={(value) =>
-                setNewSalaryType({ ...newSalaryType, costCenter: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Välj kostnadsställe" />
-              </SelectTrigger>
-              <SelectContent>
-                {settings.costCenters.map((costCenter) => (
-                  <SelectItem key={costCenter.id} value={costCenter.code}>
-                    {costCenter.code} - {costCenter.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-sm font-medium">Kategori</label>
-            <Select
-              value={newSalaryType.category}
-              onValueChange={(value: "sports" | "regular") =>
-                setNewSalaryType({ ...newSalaryType, category: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sports">Idrottsutövare</SelectItem>
-                <SelectItem value="regular">Ordinarie</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1">
-              Idrottsutövare har lägre arbetsgivaravgifter enligt svenska
-              skatteregler
-            </p>
-          </div>
-          <div>
-            <label className="text-sm font-medium">
-              Semesterersättning (%)
-            </label>
+            <label className="text-sm font-medium">Kod</label>
             <Input
               type="number"
-              value={newSalaryType.vacationRate || ""}
+              value={newSalaryType.code}
               onChange={(e) =>
-                setNewSalaryType({
-                  ...newSalaryType,
-                  vacationRate: e.target.value
-                    ? parseFloat(e.target.value)
-                    : null,
+                setNewSalaryType({ 
+                  ...newSalaryType, 
+                  code: Number(e.target.value) || 0 
                 })
               }
-              placeholder="12"
-              step="0.1"
+              placeholder="t.ex. 7120"
               min="0"
-              max="50"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Numrisk kod som kopplas till Fortnox
+            </p>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>
@@ -335,10 +185,7 @@ export function SalaryTypesTab() {
     try {
       await updateSalaryType(salaryType.id, {
         name: salaryType.name,
-        account: salaryType.account,
-        costCenter: salaryType.costCenter,
-        category: salaryType.category,
-        vacationRate: salaryType.vacationRate,
+        code: salaryType.code,
       });
       setEditingId(null);
       toast({
@@ -405,10 +252,7 @@ export function SalaryTypesTab() {
           <TableHeader>
             <TableRow>
               <TableHead>Löneart</TableHead>
-              <TableHead>Konto</TableHead>
-              <TableHead>Kostnadsställe</TableHead>
-              <TableHead>Kategori</TableHead>
-              <TableHead>Semester</TableHead>
+              <TableHead>Kod</TableHead>
               <TableHead>Åtgärder</TableHead>
             </TableRow>
           </TableHeader>
@@ -427,28 +271,7 @@ export function SalaryTypesTab() {
                     {salaryType.name}
                   </TableCell>
                   <TableCell className="font-mono">
-                    {salaryType.account}
-                  </TableCell>
-                  <TableCell className="font-mono">
-                    {salaryType.costCenter}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-md text-xs ${
-                        salaryType.category === "sports"
-                          ? "bg-primary-muted text-primary"
-                          : "bg-secondary text-secondary-foreground"
-                      }`}
-                    >
-                      {salaryType.category === "sports"
-                        ? "Idrottsutövare"
-                        : "Ordinarie"}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {salaryType.vacationRate
-                      ? `${salaryType.vacationRate}%`
-                      : "-"}
+                    {salaryType.code}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
