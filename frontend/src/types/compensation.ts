@@ -13,7 +13,8 @@ export interface CompensationRecord {
   "Total ersättning"?: number; // Calculated: Antal * Ersättning
   "Eventuell kommentar"?: string; // Optional comment
   "Datum utbet"?: string; // Payout date (YYYY-MM-DD format)
-  "Fortnox status"?: "pending" | "sent" | "error"; // Fortnox integration status
+  "Fortnox status"?: "pending" | "sent" | "error" | "completed"; // Fortnox integration status
+  "added_to_fortnox"?: boolean; // Whether the record has been successfully added to Fortnox
   created_at?: string;
   updated_at?: string;
 }

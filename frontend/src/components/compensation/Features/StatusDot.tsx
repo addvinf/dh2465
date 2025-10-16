@@ -9,6 +9,7 @@ import type { CompensationRecord } from "../../../types/compensation";
 
 interface StatusDotProps {
   status?: CompensationRecord["Fortnox status"];
+  addedToFortnox?: boolean;
   className?: string;
 }
 
@@ -25,10 +26,16 @@ const statusConfig = {
     dot: "bg-yellow-500",
     text: "Väntande på skickning",
   },
+  completed: {
+    dot: "bg-green-500",
+    text: "Lagd till i Fortnox",
+  },
 } as const;
 
-export function StatusDot({ status = "pending", className }: StatusDotProps) {
-  const config = statusConfig[status];
+export function StatusDot({ status = "pending", addedToFortnox = false, className }: StatusDotProps) {
+  // If added_to_fortnox is true, show green regardless of status
+  const effectiveStatus = addedToFortnox ? "completed" : status;
+  const config = statusConfig[effectiveStatus];
 
   return (
     <TooltipProvider>

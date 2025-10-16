@@ -125,8 +125,18 @@ export function SimpleCompensationTable({
       }
 
       // Status filter
-      if (filterStatus !== "all" && compensation["Fortnox status"] !== filterStatus) {
-        return false;
+      if (filterStatus !== "all") {
+        // If filtering for "completed", check if added_to_fortnox is true
+        if (filterStatus === "completed") {
+          if (!compensation["added_to_fortnox"]) {
+            return false;
+          }
+        } else {
+          // For other statuses, check the Fortnox status field
+          if (compensation["Fortnox status"] !== filterStatus) {
+            return false;
+          }
+        }
       }
 
       return true;

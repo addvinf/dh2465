@@ -34,7 +34,7 @@ export function MiniCompensationRow({
       onDoubleClick={handleEdit}
     >
       <TableCell className="w-8 py-2">
-        <StatusDot status={compensation["Fortnox status"]} />
+        <StatusDot status={compensation["Fortnox status"]} addedToFortnox={compensation["added_to_fortnox"]} />
       </TableCell>
       <TableCell className="py-2 text-xs whitespace-nowrap">
         {compensation["Upplagd av"] || "-"}
