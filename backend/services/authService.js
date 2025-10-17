@@ -195,7 +195,7 @@ export class AuthService {
       const { error } = await supabase.auth.resetPasswordForEmail(
         email.toLowerCase().trim(), 
         {
-          redirectTo: `${process.env.CLIENT_URL || 'http://localhost:5173'}/update-password`
+          redirectTo: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/update-password`
         }
       );
 
