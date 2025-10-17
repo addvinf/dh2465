@@ -58,11 +58,16 @@ export class AuthService {
         throw new Error(error.message);
       }
 
+      const appMeta = data.user?.app_metadata || {};
+      const usrMeta = data.user?.user_metadata || {};
+      let organizations = appMeta.organizations || usrMeta.organizations || [];
+      if (!Array.isArray(organizations)) organizations = organizations ? [String(organizations)] : [];
       return {
         user: data.user ? {
           id: data.user.id,
           email: data.user.email,
-          role: data.user.user_metadata?.role || role,
+          role: appMeta.role || usrMeta.role || role,
+          organizations,
           emailConfirmed: data.user.email_confirmed_at !== null
         } : null,
         session: data.session,
@@ -107,11 +112,16 @@ export class AuthService {
         throw new Error('Login failed - invalid response');
       }
 
+      const appMeta = data.user.app_metadata || {};
+      const usrMeta = data.user.user_metadata || {};
+      let organizations = appMeta.organizations || usrMeta.organizations || [];
+      if (!Array.isArray(organizations)) organizations = organizations ? [String(organizations)] : [];
       return {
         user: {
           id: data.user.id,
           email: data.user.email,
-          role: data.user.user_metadata?.role || 'user',
+          role: appMeta.role || usrMeta.role || 'user',
+          organizations,
           emailConfirmed: data.user.email_confirmed_at !== null,
           lastSignIn: data.user.last_sign_in_at
         },
@@ -147,12 +157,17 @@ export class AuthService {
         throw new Error('Failed to refresh session');
       }
 
+      const appMeta = data.user?.app_metadata || {};
+      const usrMeta = data.user?.user_metadata || {};
+      let organizations = appMeta.organizations || usrMeta.organizations || [];
+      if (!Array.isArray(organizations)) organizations = organizations ? [String(organizations)] : [];
       return {
         session: data.session,
         user: data.user ? {
           id: data.user.id,
           email: data.user.email,
-          role: data.user.user_metadata?.role || 'user'
+          role: appMeta.role || usrMeta.role || 'user',
+          organizations
         } : null
       };
     } catch (error) {
@@ -332,10 +347,15 @@ export class AuthService {
         throw new Error('User not found');
       }
 
+      const appMeta = data.user.app_metadata || {};
+      const usrMeta = data.user.user_metadata || {};
+      let organizations = appMeta.organizations || usrMeta.organizations || [];
+      if (!Array.isArray(organizations)) organizations = organizations ? [String(organizations)] : [];
       return {
         id: data.user.id,
         email: data.user.email,
-        role: data.user.user_metadata?.role || 'user',
+        role: appMeta.role || usrMeta.role || 'user',
+        organizations,
         emailConfirmed: data.user.email_confirmed_at !== null,
         createdAt: data.user.created_at,
         lastSignIn: data.user.last_sign_in_at

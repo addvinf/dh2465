@@ -14,6 +14,7 @@ import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSettings } from "../contexts/SettingsContext";
 import { useAuth } from "../contexts/AuthContext";
+import { OrgSwitcher } from "./OrgSwitcher";
 
 export function Header() {
   const [navOpen, setNavOpen] = React.useState(false);
@@ -175,6 +176,12 @@ export function Header() {
 
         {/* Right side: user menu */}
         <div className="flex items-center space-x-4">
+          {user?.role === 'global_admin' && (
+            <OrgSwitcher onOrgSelected={(org) => {
+              // TODO: wire this to a global org context or route param
+              console.log('Selected org:', org);
+            }} />
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">

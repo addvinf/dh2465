@@ -22,7 +22,7 @@ export class TokenUtils {
         throw new Error('Database connection failed');
       }
 
-      const { data: { user }, error } = await supabase.auth.getUser(token);
+  const { data: { user }, error } = await supabase.auth.getUser(token);
       
       if (error) {
         throw new Error(`Token verification failed: ${error.message}`);
@@ -32,10 +32,19 @@ export class TokenUtils {
         throw new Error('Invalid or expired token');
       }
 
+      const appMeta = user.app_metadata || {};
+      const usrMeta = user.user_metadata || {};
+      const role = appMeta.role || usrMeta.role || 'user';
+      let organizations = appMeta.organizations || usrMeta.organizations || [];
+      if (!Array.isArray(organizations)) {
+        organizations = organizations ? [String(organizations)] : [];
+      }
+
       return {
         id: user.id,
         email: user.email,
-        role: user.user_metadata?.role || 'user',
+        role,
+        organizations,
         emailConfirmed: user.email_confirmed_at !== null,
         createdAt: user.created_at,
         lastSignIn: user.last_sign_in_at

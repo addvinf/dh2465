@@ -15,6 +15,7 @@ import fortnoxEmployeesRouter from "./routers/fortnoxEmployees.js";
 import fortnoxAuthRouter from "./routers/fortnoxAuth.js";
 import fortnoxCompensationsRouter from "./routers/fortnoxCompensations.js";
 import authRouter from "./routers/auth.js";
+import adminRouter from "./routers/admin.js";
 import { authenticateToken, requireRole } from "./middleware/auth.js";
 
 // Security and configuration imports
@@ -88,6 +89,7 @@ app.use(express.json());
 // Public routes
 app.use("/", helloWorldRouter);
 app.use("/auth", authRouter);
+app.use("/admin", adminRouter);
 
 // Fortnox auth routes with conditional authentication
 app.use("/fortnox-auth", (req, res, next) => {

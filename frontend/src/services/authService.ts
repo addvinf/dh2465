@@ -4,6 +4,7 @@ export interface AuthUser {
   id: string;
   email: string;
   role: string;
+  organizations?: string[];
 }
 
 export interface AuthSession {

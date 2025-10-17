@@ -92,9 +92,19 @@ export const requireRole = (allowedRoles) => {
 
     // Convert single role to array for consistency
     const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+    // Expand some legacy/alias role names to new role names
+    // 'admin' historically meant a privileged admin user. Accept both org_admin and global_admin as admin-level.
+    const expandedRoles = new Set();
+    for (const r of roles) {
+      expandedRoles.add(r);
+      if (r === 'admin') {
+        expandedRoles.add('org_admin');
+        expandedRoles.add('global_admin');
+      }
+    }
 
-    // Check if user has required role
-    if (!roles.includes(req.user.role)) {
+    // Check if user has required role (supports expansions)
+    if (!expandedRoles.has(req.user.role)) {
       console.log(`Access denied: User ${req.user.email} with role '${req.user.role}' attempted to access resource requiring roles: ${roles.join(', ')}`);
       
       return res.status(403).json({ 

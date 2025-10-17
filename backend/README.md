@@ -45,6 +45,12 @@ npm run dev
 - `GET /supabase-example` → list rows from `public.database_test`
 - `POST /supabase-example` → insert row
 
+#### Admin endpoints (require global_admin role)
+- `POST /admin/organizations` → Create an organization registry entry and its three per-org tables
+  - Body: `{ "name": "Förening X" }`
+- `POST /admin/organizations/:org/admins` → Assign an org admin by email for `:org`
+  - Body: `{ "email": "user@example.com" }`
+
 #### Org data API
 - `POST /api/org/:org/tables/create` — Create the three tables for the organisation. Optional JSON body to predefine columns (all text unless changed in SQL).
 - `POST /api/org/:org/:type/upload[?headerRow=2]` — Upload an Excel file for a specific table type (`compensations|monthly_retainer|personnel`). Form field `file` must contain the file. If `headerRow=2` the second row is treated as header (for the personal förening x file). Missing columns are auto-added as text via RPC.
@@ -86,5 +92,9 @@ curl -X POST http://localhost:3000/supabase-example \
 - Dependencies and scripts live in this `dh2465` folder.
 - Uses `@supabase/supabase-js`; no raw SQL (safe from injection).
  - See `supabase_sql/table_creation.sql` for SQL helpers you can paste into Supabase to create per-organisation tables with `id` primary key and `created_at`.
+
+Auth context:
+- Tokens are verified with Supabase. We attach `{ id, email, role, organizations }` to `req.user`.
+- `role` and `organizations` are read from Supabase app_metadata (fallback to user_metadata). Prefer storing trusted fields in `app_metadata`.
 
 

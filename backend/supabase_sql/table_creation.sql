@@ -256,25 +256,55 @@ ALTER TABLE organization_settings ENABLE ROW LEVEL SECURITY;
 -- RLS Policy: Organizations can only access their own settings
 -- This assumes you have a way to identify the current organization context
 -- You may need to adjust this based on your authentication/authorization setup
-CREATE POLICY organization_settings_policy ON organization_settings
-  FOR ALL
-  USING (
-    -- Allow access if the organization matches the current context
-    -- This is a placeholder - you'll need to implement organization context
-    -- For example, using a function that gets the current user's organization
-    organization = current_setting('app.current_organization', true)
-    OR
-    -- Or allow if user has admin role (adjust based on your auth setup)
-    EXISTS (
-      SELECT 1 FROM auth.users 
-      WHERE auth.users.id = auth.uid() 
-      AND auth.users.raw_user_meta_data->>'role' = 'admin'
-    )
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies p
+    WHERE p.schemaname = 'public'
+      AND p.tablename = 'organization_settings'
+      AND p.policyname = 'organization_settings_policy'
+  ) THEN
+    CREATE POLICY organization_settings_policy ON organization_settings
+      FOR ALL
+      USING (
+        -- Allow access if the organization matches the current context
+        -- This is a placeholder - you'll need to implement organization context
+        -- For example, using a function that gets the current user's organization
+        organization = current_setting('app.current_organization', true)
+        OR
+        -- Or allow if user has admin role (adjust based on your auth setup)
+        EXISTS (
+          SELECT 1 FROM auth.users 
+          WHERE auth.users.id = auth.uid() 
+          AND auth.users.raw_user_meta_data->>'role' = 'admin'
+        )
+      );
+  END IF;
+END
+$$;
 
 -- Alternative simpler policy if you handle organization filtering in your application:
 -- CREATE POLICY organization_settings_policy ON organization_settings FOR ALL USING (true);
 -- Then ensure your API layer filters by organization
+
+-- Simple helper to register an organization and create default tables
+-- FUNCTION: create_organization(text)
+CREATE OR REPLACE FUNCTION create_organization(org_name TEXT)
+RETURNS VOID SECURITY DEFINER LANGUAGE PLPGSQL AS $$
+DECLARE
+  org TEXT;
+BEGIN
+  PERFORM set_config('search_path', 'public', true);
+  org := normalize_org_name(org_name);
+
+  INSERT INTO organization_settings (organization)
+  VALUES (org)
+  ON CONFLICT (organization) DO NOTHING;
+
+  PERFORM create_org_all_defaults(org);
+END;
+$$;
 
 -- USAGE EXAMPLE
 -- Suppose your three Excel types have headers you want to mirror:

@@ -35,8 +35,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // If adminOnly is true, only allow admin role
-  if (adminOnly && user?.role !== 'admin') {
-    return <Navigate to="/login" replace />; // Redirect to login page
+  if (adminOnly) {
+    const adminRoles = ['admin', 'org_admin', 'global_admin'];
+    if (!user?.role || !adminRoles.includes(user.role)) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
+            <p className="text-muted-foreground">You don't have permission to access this page.</p>
+          </div>
+        </div>
+      );
+    }
   }
 
   if (requiredRole && user && !requiredRole.includes(user.role)) {

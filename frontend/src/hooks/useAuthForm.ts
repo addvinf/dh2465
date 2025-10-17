@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { type LoginCredentials, type RegisterCredentials, authService } from '../services/authService';
 import { 
@@ -18,6 +18,7 @@ export function useAuthForm() {
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const { login: authLogin, register: authRegister, registerOnly } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   const login = async (credentials: LoginCredentials) => {
@@ -40,7 +41,9 @@ export function useAuthForm() {
         description: "Welcome back!",
       });
       
-      navigate('/');
+  // Redirect to the page the user originally tried to access, if any
+  const from = (location.state as any)?.from?.pathname || '/';
+  navigate(from, { replace: true });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "An error occurred";
       
